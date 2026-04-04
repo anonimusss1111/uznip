@@ -1,0 +1,7 @@
+{
+  "name": "QULAY ISH",
+  "description": "Geo-aware job marketplace for home-based women and trusted employers in Samarqand viloyati, Uzbekistan.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

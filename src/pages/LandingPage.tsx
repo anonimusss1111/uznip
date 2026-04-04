@@ -1,0 +1,307 @@
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'motion/react';
+import { Search, MapPin, Briefcase, Users, TrendingUp, ShieldCheck, ArrowRight } from 'lucide-react';
+import { REGIONS, DISTRICTS } from '../constants/locations';
+import { CATEGORIES } from '../constants/categories';
+import Layout from '../components/Layout';
+import { useAuth } from '../hooks/useAuth';
+
+export default function LandingPage() {
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
+  const [currentDistrictIndex, setCurrentDistrictIndex] = React.useState(0);
+  const samarkandDistricts = DISTRICTS["Samarqand viloyati"];
+
+  useEffect(() => {
+    if (user && profile) {
+      if (profile.role === 'worker') navigate('/worker/dashboard');
+      else if (profile.role === 'employer') navigate('/employer/dashboard');
+      else if (profile.role === 'admin') navigate('/admin/dashboard');
+      else if (profile.role === 'super_admin') navigate('/super-admin/dashboard');
+    }
+  }, [user, profile, navigate]);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentDistrictIndex((prev) => (prev + 1) % samarkandDistricts.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [samarkandDistricts.length]);
+
+  return (
+    <Layout>
+      {/* Hero Section */}
+      <section className="relative h-[600px] flex items-center overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1528510138833-9388245fa435?auto=format&fit=crop&q=80&w=1920&h=1080"
+            alt="Registan, Samarkand"
+            className="w-full h-full object-cover brightness-50"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-900/60 to-transparent"></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+          <div className="max-w-2xl">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <h1 className="text-4xl md:text-6xl font-black text-white leading-tight mb-6 tracking-tight">
+                Samarqandda <br />
+                <span className="text-blue-400 inline-block min-w-[280px]">
+                  <motion.span
+                    key={currentDistrictIndex}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="inline-block"
+                  >
+                    {samarkandDistricts[currentDistrictIndex]}
+                  </motion.span>
+                </span>
+                <br />
+                boʻylab ish toping
+              </h1>
+              <p className="text-xl text-gray-200 mb-10 leading-relaxed font-medium">
+                Uyda oʻtirgan ayollar uchun qulay va ishonchli ish platformasi. Oʻz hududingizda daromad topishni boshlang.
+              </p>
+
+              <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                <Link
+                  to="/jobs"
+                  className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 transition-all shadow-xl flex items-center justify-center group"
+                >
+                  Ish topish
+                  <ArrowRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <Link
+                  to="/auth"
+                  className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-white/20 transition-all flex items-center justify-center"
+                >
+                  Ish berish
+                </Link>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Search Section */}
+      <section className="relative z-20 -mt-12 max-w-5xl mx-auto px-4">
+        <div className="bg-white p-3 rounded-[32px] shadow-2xl border border-gray-100 flex flex-col md:flex-row gap-2">
+          <div className="flex-1 flex items-center px-6 py-4 border-b md:border-b-0 md:border-r border-gray-100">
+            <Search className="text-gray-400 mr-3" size={24} />
+            <input 
+              type="text" 
+              placeholder="Qanday ish qidiryapsiz?" 
+              className="w-full bg-transparent border-none focus:ring-0 outline-none text-lg font-medium"
+            />
+          </div>
+          <div className="flex-1 flex items-center px-6 py-4">
+            <MapPin className="text-gray-400 mr-3" size={24} />
+            <select 
+              className="w-full bg-transparent border-none focus:ring-0 outline-none text-lg font-medium appearance-none cursor-pointer"
+              onChange={(e) => navigate(`/jobs?district=${e.target.value}`)}
+            >
+              <option value="">Barcha tumanlar</option>
+              {samarkandDistricts.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+          </div>
+          <button 
+            onClick={() => navigate('/jobs')}
+            className="bg-blue-600 text-white px-10 py-5 rounded-[24px] font-black text-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 active:scale-95"
+          >
+            Qidirish
+          </button>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-12 bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="text-3xl font-black text-blue-600 mb-1">1,240+</div>
+              <div className="text-sm font-medium text-gray-500 uppercase tracking-wider">Faol ishlar</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-black text-blue-600 mb-1">820+</div>
+              <div className="text-sm font-medium text-gray-500 uppercase tracking-wider">Ishchilar</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-black text-blue-600 mb-1">560+</div>
+              <div className="text-sm font-medium text-gray-500 uppercase tracking-wider">Ish beruvchilar</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-black text-blue-600 mb-1">{samarkandDistricts.length}</div>
+              <div className="text-sm font-medium text-gray-500 uppercase tracking-wider">Tumanlar</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Categories Section */}
+      <section className="py-24 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Ommabop yoʻnalishlar</h2>
+            <p className="text-gray-500 max-w-2xl mx-auto">
+              Oʻzingizga mos keladigan toifani tanlang va oʻz hududingizdagi eng yaxshi takliflarni koʻring.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+            {CATEGORIES.map((category) => (
+              <motion.div
+                key={category.id}
+                whileHover={{ scale: 1.02 }}
+                className="bg-white p-8 rounded-3xl border border-gray-200 shadow-sm hover:shadow-md transition-all cursor-pointer text-center group"
+              >
+                <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">{category.icon}</div>
+                <h3 className="font-bold text-gray-900">{category.name}</h3>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+            <div>
+              <h2 className="text-3xl font-black text-gray-900 mb-8 leading-tight tracking-tight">
+                Nega aynan <span className="text-blue-600">QULAY ISH</span>?
+              </h2>
+              <div className="space-y-8">
+                <div className="flex items-start space-x-4">
+                  <div className="bg-blue-50 p-3 rounded-2xl text-blue-600">
+                    <MapPin size={24} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900 mb-1">Geo-joylashuvga asoslangan</h4>
+                    <p className="text-gray-500 text-sm leading-relaxed">
+                      Faqat oʻz mahallangiz, tumaningiz yoki viloyatingizdagi ishlarni koʻrasiz. Uzoqqa borish shart emas.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <div className="bg-green-50 p-3 rounded-2xl text-green-600">
+                    <ShieldCheck size={24} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900 mb-1">Ishonchli va xavfsiz</h4>
+                    <p className="text-gray-500 text-sm leading-relaxed">
+                      Barcha ish beruvchilar va ishchilar tekshiriladi. Reyting va fikr-mulohazalar tizimi mavjud.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <div className="bg-purple-50 p-3 rounded-2xl text-purple-600">
+                    <TrendingUp size={24} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900 mb-1">Daromadni oshirish</h4>
+                    <p className="text-gray-500 text-sm leading-relaxed">
+                      Oʻz mahoratingizni koʻrsating va munosib haq toʻlanadigan ishlarni toping.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="relative">
+              <div className="aspect-square bg-blue-600 rounded-[40px] overflow-hidden shadow-2xl rotate-3">
+                <img
+                  src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=800&h=800"
+                  alt="Happy worker"
+                  className="w-full h-full object-cover -rotate-3 scale-110"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+              <div className="absolute -bottom-8 -left-8 bg-white p-6 rounded-3xl shadow-xl border border-gray-100 max-w-[200px]">
+                <div className="flex items-center space-x-2 mb-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Hozirda faol</span>
+                </div>
+                <div className="text-2xl font-black text-gray-900">2,450+</div>
+                <div className="text-xs text-gray-500">ayollar ish topdi</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Top Workers Section */}
+      <section className="py-24 bg-white border-t border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-end justify-between mb-12">
+            <div>
+              <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Eng yaxshi ishchilar</h2>
+              <p className="text-gray-500">Samarqand viloyatidagi eng yuqori reytingli mutaxassislar.</p>
+            </div>
+            <Link to="/workers" className="text-blue-600 font-bold flex items-center hover:underline">
+              Barchasini koʻrish <ArrowRight size={16} className="ml-2" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { name: 'Zilola Ahmedova', skill: 'Tikuvchilik', rating: 5.0, district: 'Samarqand shahar' },
+              { name: 'Madina Karimova', skill: 'Oshpazlik', rating: 4.9, district: 'Urgut' },
+              { name: 'Nigora Usmonova', skill: 'Enagalik', rating: 4.8, district: 'Pastdargʻom' },
+              { name: 'Guli Ergasheva', skill: 'Tozalash', rating: 4.8, district: 'Bulungʻur' }
+            ].map((worker, i) => (
+              <div key={i} className="bg-gray-50 p-6 rounded-[2rem] border border-gray-100 hover:shadow-xl transition-all group">
+                <div className="w-20 h-20 bg-white rounded-2xl mb-4 overflow-hidden border border-gray-100 shadow-inner">
+                  <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(worker.name)}&background=random`} alt={worker.name} className="w-full h-full object-cover" />
+                </div>
+                <h3 className="font-black text-gray-900 mb-1">{worker.name}</h3>
+                <p className="text-blue-600 text-xs font-bold uppercase tracking-wider mb-3">{worker.skill}</p>
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200/50">
+                  <div className="flex items-center text-amber-500">
+                    <TrendingUp size={14} className="mr-1.5" />
+                    <span className="text-sm font-black text-gray-900">{worker.rating}</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">{worker.district}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-24 bg-blue-600 overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full blur-3xl opacity-50 -mr-32 -mt-32"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-700 rounded-full blur-3xl opacity-50 -ml-32 -mb-32"></div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          <h2 className="text-3xl md:text-5xl font-black text-white mb-8 tracking-tight">
+            Bugunoq oʻz faoliyatingizni boshlang
+          </h2>
+          <p className="text-blue-100 text-xl mb-12 max-w-2xl mx-auto leading-relaxed">
+            Minglab ayollar allaqachon bizning platformamiz orqali oʻz daromadlarini topishmoqda. Siz ham ularga qoʻshiling!
+          </p>
+          <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+            <Link
+              to="/auth"
+              className="bg-white text-blue-600 px-10 py-5 rounded-2xl font-black text-xl hover:bg-blue-50 transition-all shadow-2xl"
+            >
+              Roʻyxatdan oʻtish
+            </Link>
+            <Link
+              to="/statistics"
+              className="bg-blue-700 text-white px-10 py-5 rounded-2xl font-black text-xl hover:bg-blue-800 transition-all border border-blue-500"
+            >
+              Statistikani koʻrish
+            </Link>
+          </div>
+        </div>
+      </section>
+    </Layout>
+  );
+}

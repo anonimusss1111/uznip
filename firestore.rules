@@ -1,0 +1,206 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: profiles
+    // Fields: uid, fullName, email, phoneNumber, role, region, district, neighborhood, bio, skills, experienceLevel, rating, reviewCount, completedJobs, isVerified, photoUrl, createdAt
+    //
+    // Collection: jobs
+    // Fields: employerId, title, description, category, price, workType, region, district, neighborhood, address, deadline, images, requirements, contractConditions, status, createdAt
+    //
+    // Collection: service_posts
+    // Fields: workerId, title, description, category, expectedPrice, region, district, neighborhood, images, status, createdAt
+    //
+    // Collection: applications
+    // Fields: jobId, workerId, employerId, status, message, createdAt
+    //
+    // Collection: contracts
+    // Fields: jobId, workerId, employerId, amount, startDate, endDate, terms, employerSigned, workerSigned, adminApproved, status, createdAt
+    //
+    // Collection: chat_messages
+    // Fields: chatId, senderId, receiverId, text, attachmentUrl, createdAt
+    //
+    // Collection: notifications
+    // Fields: userId, title, message, type, link, read, createdAt
+    //
+    // Collection: disputes
+    // Fields: contractId, openedById, reason, evidenceUrls, status, adminDecision, createdAt
+    //
+    // Collection: verification_requests
+    // Fields: userId, idPhotoUrl, selfieUrl, status, createdAt
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function getRole() {
+      return get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role;
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && 
+        (getRole() == 'super_admin' || request.auth.token.email == "eslabturing@gmail.com");
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (getRole() == 'admin' || isSuperAdmin());
+    }
+
+    function isWorker() {
+      return isAuthenticated() && getRole() == 'worker';
+    }
+
+    function isEmployer() {
+      return isAuthenticated() && getRole() == 'employer';
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidUrl(url) {
+      return url is string && (url.matches("^https://.*") || url.matches("^http://.*"));
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidProfile(data) {
+      return data.uid is string && data.fullName is string && data.fullName.size() > 0 &&
+             data.role in ['worker', 'employer', 'admin', 'super_admin'] &&
+             data.region is string;
+    }
+
+    function isValidJob(data) {
+      return data.employerId is string && data.title is string && data.title.size() > 0 &&
+             data.category is string && data.price is number && data.price >= 0 &&
+             data.status in ['open', 'filled', 'in-progress', 'completed', 'closed'];
+    }
+
+    function isValidApplication(data) {
+      return data.jobId is string && data.workerId is string && data.employerId is string &&
+             data.status in ['pending', 'shortlisted', 'accepted', 'rejected'];
+    }
+
+    function isValidContract(data) {
+      return data.jobId is string && data.workerId is string && data.employerId is string &&
+             data.amount is number && data.amount >= 0 &&
+             data.status in ['draft', 'signed', 'active', 'completed', 'disputed'];
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /profiles/{uid} {
+      // Users can read their own profile. Admins can read all.
+      // Workers and Employers are public for the marketplace.
+      allow read: if isAuthenticated();
+      
+      // Only owner can create their profile.
+      allow create: if isOwner(uid) && isValidProfile(request.resource.data);
+      
+      // Only owner can update their profile. Admins can update roles or verify.
+      allow update: if (isOwner(uid) && request.resource.data.role == resource.data.role) || isAdmin();
+    }
+
+    match /jobs/{jobId} {
+      allow read: if isAuthenticated();
+      allow create: if isEmployer() && request.resource.data.employerId == request.auth.uid && isValidJob(request.resource.data);
+      allow update: if (isOwner(resource.data.employerId) && isValidJob(request.resource.data)) || isAdmin();
+      allow delete: if isOwner(resource.data.employerId) || isAdmin();
+    }
+
+    match /service_posts/{postId} {
+      allow read: if isAuthenticated();
+      allow create: if isWorker() && request.resource.data.workerId == request.auth.uid;
+      allow update: if isOwner(resource.data.workerId) || isAdmin();
+      allow delete: if isOwner(resource.data.workerId) || isAdmin();
+    }
+
+    match /applications/{applicationId} {
+      allow read: if isAuthenticated() && (
+        resource.data.workerId == request.auth.uid || 
+        resource.data.employerId == request.auth.uid || 
+        isAdmin()
+      );
+      allow create: if isWorker() && request.resource.data.workerId == request.auth.uid && isValidApplication(request.resource.data);
+      allow update: if isAuthenticated() && (
+        resource.data.workerId == request.auth.uid || 
+        resource.data.employerId == request.auth.uid || 
+        isAdmin()
+      );
+      allow delete: if isOwner(resource.data.workerId) || isAdmin();
+    }
+
+    match /contracts/{contractId} {
+      allow read: if isAuthenticated() && (
+        resource.data.workerId == request.auth.uid || 
+        resource.data.employerId == request.auth.uid || 
+        isAdmin()
+      );
+      allow create: if (isEmployer() && request.resource.data.employerId == request.auth.uid) || isAdmin();
+      allow update: if (
+        (isAuthenticated() && (resource.data.workerId == request.auth.uid || resource.data.employerId == request.auth.uid) && 
+         request.resource.data.adminApproved == resource.data.adminApproved) || 
+        isAdmin()
+      );
+    }
+
+    match /chat_messages/{messageId} {
+      allow read: if isAuthenticated() && (
+        resource.data.senderId == request.auth.uid || 
+        resource.data.receiverId == request.auth.uid || 
+        isAdmin()
+      );
+      allow create: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
+    }
+
+    match /notifications/{notificationId} {
+      allow read, update: if isOwner(resource.data.userId);
+      allow create: if isAuthenticated(); // Users can be notified by system or others
+    }
+
+    match /disputes/{disputeId} {
+      allow read: if isAuthenticated() && (
+        resource.data.openedById == request.auth.uid || 
+        isAdmin()
+      );
+      allow create: if isAuthenticated() && request.resource.data.openedById == request.auth.uid;
+      allow update: if isAdmin();
+    }
+
+    match /verification_requests/{requestId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin();
+    }
+
+    match /employment_stats/{statId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+  }
+}

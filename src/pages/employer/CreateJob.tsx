@@ -1,0 +1,335 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { db, handleFirestoreError, OperationType } from '../../firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import DashboardLayout from '../../components/DashboardLayout';
+import { REGIONS, DISTRICTS } from '../../constants/locations';
+import { CATEGORIES } from '../../constants/categories';
+import { Briefcase, MapPin, DollarSign, Calendar, FileText, Plus, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { useAuth } from '../../hooks/useAuth';
+
+export default function CreateJob() {
+  const navigate = useNavigate();
+  const { user, isDemo } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    category: '',
+    price: '',
+    region: '',
+    district: '',
+    neighborhood: '',
+    workType: 'Bir martalik',
+    requirements: [] as string[],
+    currentRequirement: ''
+  });
+
+  const handleAddRequirement = () => {
+    if (formData.currentRequirement.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        requirements: [...prev.requirements, prev.currentRequirement.trim()],
+        currentRequirement: ''
+      }));
+    }
+  };
+
+  const removeRequirement = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      requirements: prev.requirements.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) {
+      setError("Iltimos, tizimga kiring.");
+      return;
+    }
+    
+    // Validation
+    if (!formData.title || !formData.description || !formData.category || !formData.price || !formData.region || !formData.district) {
+      setError("Iltimos, barcha majburiy maydonlarni toʻldiring.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      if (isDemo) {
+        // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // In demo mode, we just simulate success
+        // In a real app, we might save to a local state or localStorage
+        const demoJob = {
+          id: `demo-${Date.now()}`,
+          employerId: user.uid,
+          ...formData,
+          price: Number(formData.price),
+          status: 'open',
+          createdAt: { seconds: Math.floor(Date.now() / 1000), nanoseconds: 0 }
+        };
+        
+        // Save to session storage for immediate visibility in this session
+        const existingDemoJobs = JSON.parse(sessionStorage.getItem('custom_demo_jobs') || '[]');
+        sessionStorage.setItem('custom_demo_jobs', JSON.stringify([...existingDemoJobs, demoJob]));
+      } else {
+        await addDoc(collection(db, 'jobs'), {
+          employerId: user.uid,
+          title: formData.title,
+          description: formData.description,
+          category: formData.category,
+          price: Number(formData.price),
+          region: formData.region,
+          district: formData.district,
+          neighborhood: formData.neighborhood,
+          workType: formData.workType,
+          requirements: formData.requirements,
+          status: 'open',
+          createdAt: serverTimestamp()
+        });
+      }
+      
+      setSuccess(true);
+      setTimeout(() => navigate('/employer/dashboard'), 2000);
+    } catch (err) {
+      console.error("Error creating job:", err);
+      setError("Xatolik yuz berdi. Iltimos, qaytadan urinib koʻring.");
+      if (!isDemo) {
+        handleFirestoreError(err, OperationType.WRITE, 'jobs');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <DashboardLayout>
+      <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Yangi ish eʻloni yaratish</h1>
+          <p className="text-gray-500 mt-2">Barcha kerakli maʻlumotlarni toʻldiring va munosib ishchini toping.</p>
+        </div>
+
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600"
+            >
+              <AlertCircle size={20} />
+              <p className="font-medium">{error}</p>
+            </motion.div>
+          )}
+
+          {success ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-green-50 border border-green-200 rounded-3xl p-12 text-center"
+            >
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-green-600 mx-auto mb-6">
+                <CheckCircle size={48} />
+              </div>
+              <h2 className="text-2xl font-black text-gray-900 mb-2">Eʻlon muvaffaqiyatli yaratildi!</h2>
+              <p className="text-gray-600">Sizni boshqaruv paneliga yoʻnaltirmoqdamiz...</p>
+            </motion.div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Basic Info */}
+              <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
+                    <Briefcase size={20} />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900">Asosiy maʻlumotlar</h2>
+                </div>
+
+                <div className="grid grid-cols-1 gap-6">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Ish nomi</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      className="w-full px-5 py-4 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                      placeholder="Masalan: Hovli tozalash, Yuk tashish..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Kategoriya</label>
+                    <select
+                      required
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      className="w-full px-5 py-4 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                    >
+                      <option value="">Tanlang...</option>
+                      {CATEGORIES.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Ish tavsifi</label>
+                    <textarea
+                      required
+                      rows={4}
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="w-full px-5 py-4 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
+                      placeholder="Ish haqida batafsil maʻlumot bering..."
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Location & Price */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center text-green-600">
+                      <MapPin size={20} />
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900">Manzil</h2>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl mb-4">
+                      <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">Viloyat</p>
+                      <p className="text-sm font-black text-blue-900">Samarqand viloyati</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Tuman</label>
+                      <select
+                        required
+                        value={formData.district}
+                        onChange={(e) => setFormData({ ...formData, district: e.target.value, region: 'Samarqand viloyati' })}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                      >
+                        <option value="">Tanlang...</option>
+                        {DISTRICTS["Samarqand viloyati"].map(d => <option key={d} value={d}>{d}</option>)}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Mahalla</label>
+                      <input
+                        type="text"
+                        value={formData.neighborhood}
+                        onChange={(e) => setFormData({ ...formData, neighborhood: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        placeholder="Masalan: Bogʻishamol"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
+                      <DollarSign size={20} />
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900">Narx va muddat</h2>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Taklif qilinayotgan haq (UZS)</label>
+                      <input
+                        type="number"
+                        required
+                        value={formData.price}
+                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        placeholder="Masalan: 100000"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Ish turi</label>
+                      <select
+                        value={formData.workType}
+                        onChange={(e) => setFormData({ ...formData, workType: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                      >
+                        <option value="Bir martalik">Bir martalik</option>
+                        <option value="Kunlik">Kunlik</option>
+                        <option value="Doimiy">Doimiy</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Requirements */}
+              <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600">
+                    <FileText size={20} />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900">Talablar</h2>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={formData.currentRequirement}
+                      onChange={(e) => setFormData({ ...formData, currentRequirement: e.target.value })}
+                      className="flex-1 px-4 py-3 rounded-xl border border-gray-200 outline-none"
+                      placeholder="Masalan: Tajribali boʻlishi kerak..."
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddRequirement}
+                      className="bg-gray-900 text-white px-6 rounded-xl font-bold hover:bg-gray-800"
+                    >
+                      Qoʻshish
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {formData.requirements.map((req, index) => (
+                      <div key={index} className="bg-gray-100 px-4 py-2 rounded-xl flex items-center gap-2">
+                        <span className="text-sm text-gray-700">{req}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeRequirement(index)}
+                          className="text-gray-400 hover:text-red-500"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-12 py-5 bg-blue-600 text-white rounded-3xl font-black text-xl hover:bg-blue-700 shadow-2xl shadow-blue-200 transition-all disabled:opacity-50"
+                >
+                  {loading ? 'Yaratilmoqda...' : 'Eʻlonni joylashtirish'}
+                </button>
+              </div>
+            </form>
+          )}
+        </AnimatePresence>
+      </div>
+    </DashboardLayout>
+  );
+}
