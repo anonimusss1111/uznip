@@ -47,12 +47,14 @@ service cloud.firestore {
     }
 
     function getRole() {
-      return get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role;
+      return exists(/databases/$(database)/documents/profiles/$(request.auth.uid)) 
+        ? get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role 
+        : 'guest';
     }
 
     function isSuperAdmin() {
       return isAuthenticated() && 
-        (getRole() == 'super_admin' || request.auth.token.email == "eslabturing@gmail.com");
+        (getRole() == 'super_admin' || (request.auth.token.email == "eslabturing@gmail.com" && request.auth.token.email_verified == true));
     }
 
     function isAdmin() {
@@ -117,7 +119,7 @@ service cloud.firestore {
     match /profiles/{uid} {
       // Users can read their own profile. Admins can read all.
       // Workers and Employers are public for the marketplace.
-      allow read: if isAuthenticated();
+      allow read: if true;
       
       // Only owner can create their profile.
       allow create: if isOwner(uid) && isValidProfile(request.resource.data);
@@ -127,14 +129,14 @@ service cloud.firestore {
     }
 
     match /jobs/{jobId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow create: if isEmployer() && request.resource.data.employerId == request.auth.uid && isValidJob(request.resource.data);
       allow update: if (isOwner(resource.data.employerId) && isValidJob(request.resource.data)) || isAdmin();
       allow delete: if isOwner(resource.data.employerId) || isAdmin();
     }
 
     match /service_posts/{postId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow create: if isWorker() && request.resource.data.workerId == request.auth.uid;
       allow update: if isOwner(resource.data.workerId) || isAdmin();
       allow delete: if isOwner(resource.data.workerId) || isAdmin();
@@ -199,7 +201,7 @@ service cloud.firestore {
     }
 
     match /employment_stats/{statId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow write: if isAdmin();
     }
   }

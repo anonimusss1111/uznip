@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { formatDistanceToNow } from 'date-fns';
 import { uz, ru, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
+import { getDistrictKey } from '../lib/utils';
 
 interface JobCardProps {
   job: Job;
@@ -35,12 +36,12 @@ export default function JobCard({ job, onApply }: JobCardProps) {
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <span className="text-[10px] font-black text-primary bg-primary/10 px-3 py-1.5 rounded-xl uppercase tracking-widest border border-primary/20">
-              {job.category}
+              {t(`categories.${job.category}`, { defaultValue: job.category })}
             </span>
             {job.status === 'open' && (
               <span className="flex items-center text-[10px] font-black text-emerald-600 bg-emerald-500/10 px-3 py-1.5 rounded-xl uppercase tracking-widest border border-emerald-500/20">
                 <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-2 animate-pulse" />
-                {t('jobs.active') || 'Faol'}
+                {t('common.active')}
               </span>
             )}
           </div>
@@ -50,7 +51,7 @@ export default function JobCard({ job, onApply }: JobCardProps) {
           <div className="flex flex-wrap items-center text-muted-foreground text-xs gap-y-2 gap-x-5">
             <span className="flex items-center font-semibold">
               <MapPin size={14} className="mr-2 text-primary/60" />
-              {job.region}{job.district ? `, ${job.district}` : ''}
+              {t('common.region_name', { defaultValue: job.region })}{job.district ? `, ${t(`districts.${getDistrictKey(job.district)}`, { defaultValue: job.district })}` : ''}
             </span>
             <span className="flex items-center font-semibold">
               <Clock size={14} className="mr-2 text-muted-foreground/60" />
@@ -61,7 +62,7 @@ export default function JobCard({ job, onApply }: JobCardProps) {
       </div>
 
       <p className="text-muted-foreground/80 text-sm leading-relaxed line-clamp-3 mb-10 flex-1 font-medium">
-        {job.description || t('jobs.no_description') || 'Ushbu ish uchun batafsil tavsif berilmagan.'}
+        {job.description || t('jobs.no_description')}
       </p>
 
       <div className="space-y-6 pt-6 border-t border-border/50 relative z-10">
@@ -77,7 +78,7 @@ export default function JobCard({ job, onApply }: JobCardProps) {
             </div>
             <div>
               <div className="flex items-center gap-1.5 mb-0.5">
-                <span className="text-xs font-black text-foreground">{t('jobs.verified') || 'Tasdiqlangan'}</span>
+                <span className="text-xs font-black text-foreground">{t('common.verified')}</span>
                 <ShieldCheck size={14} className="text-primary" />
               </div>
               <div className="flex items-center text-amber-500">
@@ -87,9 +88,9 @@ export default function JobCard({ job, onApply }: JobCardProps) {
             </div>
           </div>
           <div className="text-right">
-            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-2">{t('jobs.price') || 'Taklif'}</p>
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-2">{t('common.price')}</p>
             <div className="text-xl font-black text-primary tracking-tight">
-              {job.price.toLocaleString()} <span className="text-[10px] font-bold text-muted-foreground uppercase ml-1">UZS</span>
+              {job.price.toLocaleString()} <span className="text-[10px] font-bold text-muted-foreground uppercase ml-1">{t('common.uzs')}</span>
             </div>
           </div>
         </div>

@@ -6,9 +6,12 @@ import { REGIONS, DISTRICTS } from '../constants/locations';
 import { CATEGORIES } from '../constants/categories';
 import Layout from '../components/Layout';
 import { useAuth } from '../hooks/useAuth';
+import { useTranslation } from 'react-i18next';
+import { getDistrictKey } from '../lib/utils';
 
 export default function LandingPage() {
   const { user, profile } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [currentDistrictIndex, setCurrentDistrictIndex] = React.useState(0);
   const samarkandDistricts = DISTRICTS["Samarqand viloyati"];
@@ -51,7 +54,7 @@ export default function LandingPage() {
               transition={{ duration: 0.6 }}
             >
               <h1 className="text-4xl md:text-6xl font-black text-white leading-tight mb-6 tracking-tight">
-                Samarqandda <br />
+                {t('landing.samarkand')} <br />
                 <span className="text-blue-400 inline-block min-w-[280px]">
                   <motion.span
                     key={currentDistrictIndex}
@@ -60,14 +63,14 @@ export default function LandingPage() {
                     exit={{ opacity: 0, y: -10 }}
                     className="inline-block"
                   >
-                    {samarkandDistricts[currentDistrictIndex]}
+                    {t(`districts.${getDistrictKey(samarkandDistricts[currentDistrictIndex])}`)}
                   </motion.span>
                 </span>
                 <br />
-                boʻylab ish toping
+                {t('landing.hero_title_suffix')}
               </h1>
               <p className="text-xl text-gray-200 mb-10 leading-relaxed font-medium">
-                Uyda oʻtirgan ayollar uchun qulay va ishonchli ish platformasi. Oʻz hududingizda daromad topishni boshlang.
+                {t('landing.hero_subtitle')}
               </p>
 
               <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
@@ -75,14 +78,14 @@ export default function LandingPage() {
                   to="/jobs"
                   className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 transition-all shadow-xl flex items-center justify-center group"
                 >
-                  Ish topish
+                  {t('landing.find_job')}
                   <ArrowRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <Link
                   to="/auth"
                   className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-white/20 transition-all flex items-center justify-center"
                 >
-                  Ish berish
+                  {t('landing.post_job')}
                 </Link>
               </div>
             </motion.div>
@@ -97,7 +100,7 @@ export default function LandingPage() {
             <Search className="text-gray-400 mr-3" size={24} />
             <input 
               type="text" 
-              placeholder="Qanday ish qidiryapsiz?" 
+              placeholder={t('landing.search_placeholder')} 
               className="w-full bg-transparent border-none focus:ring-0 outline-none text-lg font-medium"
             />
           </div>
@@ -107,15 +110,15 @@ export default function LandingPage() {
               className="w-full bg-transparent border-none focus:ring-0 outline-none text-lg font-medium appearance-none cursor-pointer"
               onChange={(e) => navigate(`/jobs?district=${e.target.value}`)}
             >
-              <option value="">Barcha tumanlar</option>
-              {samarkandDistricts.map(d => <option key={d} value={d}>{d}</option>)}
+              <option value="">{t('landing.all_districts')}</option>
+              {samarkandDistricts.map(d => <option key={d} value={d}>{t(`districts.${getDistrictKey(d)}`)}</option>)}
             </select>
           </div>
           <button 
             onClick={() => navigate('/jobs')}
             className="bg-blue-600 text-white px-10 py-5 rounded-[24px] font-black text-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 active:scale-95"
           >
-            Qidirish
+            {t('common.search')}
           </button>
         </div>
       </section>
@@ -126,19 +129,19 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="text-center">
               <div className="text-3xl font-black text-blue-600 mb-1">1,240+</div>
-              <div className="text-sm font-medium text-gray-500 uppercase tracking-wider">Faol ishlar</div>
+              <div className="text-sm font-medium text-gray-500 uppercase tracking-wider">{t('stats.active_jobs')}</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-black text-blue-600 mb-1">820+</div>
-              <div className="text-sm font-medium text-gray-500 uppercase tracking-wider">Ishchilar</div>
+              <div className="text-sm font-medium text-gray-500 uppercase tracking-wider">{t('stats.workers')}</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-black text-blue-600 mb-1">560+</div>
-              <div className="text-sm font-medium text-gray-500 uppercase tracking-wider">Ish beruvchilar</div>
+              <div className="text-sm font-medium text-gray-500 uppercase tracking-wider">{t('stats.employers')}</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-black text-blue-600 mb-1">{samarkandDistricts.length}</div>
-              <div className="text-sm font-medium text-gray-500 uppercase tracking-wider">Tumanlar</div>
+              <div className="text-sm font-medium text-gray-500 uppercase tracking-wider">{t('stats.districts')}</div>
             </div>
           </div>
         </div>
@@ -148,9 +151,9 @@ export default function LandingPage() {
       <section className="py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Ommabop yoʻnalishlar</h2>
+            <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">{t('landing.popular_categories')}</h2>
             <p className="text-gray-500 max-w-2xl mx-auto">
-              Oʻzingizga mos keladigan toifani tanlang va oʻz hududingizdagi eng yaxshi takliflarni koʻring.
+              {t('landing.popular_categories_subtitle')}
             </p>
           </div>
 
@@ -162,7 +165,7 @@ export default function LandingPage() {
                 className="bg-white p-8 rounded-3xl border border-gray-200 shadow-sm hover:shadow-md transition-all cursor-pointer text-center group"
               >
                 <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">{category.icon}</div>
-                <h3 className="font-bold text-gray-900">{category.name}</h3>
+                <h3 className="font-bold text-gray-900">{t(`categories.${category.id}`)}</h3>
               </motion.div>
             ))}
           </div>
@@ -175,7 +178,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             <div>
               <h2 className="text-3xl font-black text-gray-900 mb-8 leading-tight tracking-tight">
-                Nega aynan <span className="text-blue-600">QULAY ISH</span>?
+                {t('landing.why_us_title')}
               </h2>
               <div className="space-y-8">
                 <div className="flex items-start space-x-4">
@@ -183,9 +186,9 @@ export default function LandingPage() {
                     <MapPin size={24} />
                   </div>
                   <div>
-                    <h4 className="font-bold text-gray-900 mb-1">Geo-joylashuvga asoslangan</h4>
+                    <h4 className="font-bold text-gray-900 mb-1">{t('landing.geo_based')}</h4>
                     <p className="text-gray-500 text-sm leading-relaxed">
-                      Faqat oʻz mahallangiz, tumaningiz yoki viloyatingizdagi ishlarni koʻrasiz. Uzoqqa borish shart emas.
+                      {t('landing.geo_based_desc')}
                     </p>
                   </div>
                 </div>
@@ -194,9 +197,9 @@ export default function LandingPage() {
                     <ShieldCheck size={24} />
                   </div>
                   <div>
-                    <h4 className="font-bold text-gray-900 mb-1">Ishonchli va xavfsiz</h4>
+                    <h4 className="font-bold text-gray-900 mb-1">{t('landing.trusted')}</h4>
                     <p className="text-gray-500 text-sm leading-relaxed">
-                      Barcha ish beruvchilar va ishchilar tekshiriladi. Reyting va fikr-mulohazalar tizimi mavjud.
+                      {t('landing.trusted_desc')}
                     </p>
                   </div>
                 </div>
@@ -205,9 +208,9 @@ export default function LandingPage() {
                     <TrendingUp size={24} />
                   </div>
                   <div>
-                    <h4 className="font-bold text-gray-900 mb-1">Daromadni oshirish</h4>
+                    <h4 className="font-bold text-gray-900 mb-1">{t('landing.income')}</h4>
                     <p className="text-gray-500 text-sm leading-relaxed">
-                      Oʻz mahoratingizni koʻrsating va munosib haq toʻlanadigan ishlarni toping.
+                      {t('landing.income_desc')}
                     </p>
                   </div>
                 </div>
@@ -225,10 +228,10 @@ export default function LandingPage() {
               <div className="absolute -bottom-8 -left-8 bg-white p-6 rounded-3xl shadow-xl border border-gray-100 max-w-[200px]">
                 <div className="flex items-center space-x-2 mb-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Hozirda faol</span>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('landing.active_now')}</span>
                 </div>
                 <div className="text-2xl font-black text-gray-900">2,450+</div>
-                <div className="text-xs text-gray-500">ayollar ish topdi</div>
+                <div className="text-xs text-gray-500">{t('landing.women_found_job')}</div>
               </div>
             </div>
           </div>
@@ -240,20 +243,20 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-end justify-between mb-12">
             <div>
-              <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Eng yaxshi ishchilar</h2>
-              <p className="text-gray-500">Samarqand viloyatidagi eng yuqori reytingli mutaxassislar.</p>
+              <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">{t('landing.top_workers')}</h2>
+              <p className="text-gray-500">{t('landing.top_workers_subtitle')}</p>
             </div>
             <Link to="/workers" className="text-blue-600 font-bold flex items-center hover:underline">
-              Barchasini koʻrish <ArrowRight size={16} className="ml-2" />
+              {t('landing.view_all')} <ArrowRight size={16} className="ml-2" />
             </Link>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { name: 'Zilola Ahmedova', skill: 'Tikuvchilik', rating: 5.0, district: 'Samarqand shahar' },
-              { name: 'Madina Karimova', skill: 'Oshpazlik', rating: 4.9, district: 'Urgut' },
-              { name: 'Nigora Usmonova', skill: 'Enagalik', rating: 4.8, district: 'Pastdargʻom' },
-              { name: 'Guli Ergasheva', skill: 'Tozalash', rating: 4.8, district: 'Bulungʻur' }
+              { name: 'Zilola Ahmedova', skill: t('categories.seamstress'), rating: 5.0, district: t('districts.samarkand_city') },
+              { name: 'Madina Karimova', skill: t('categories.cook'), rating: 4.9, district: t('districts.urgut') },
+              { name: 'Nigora Usmonova', skill: t('categories.nanny'), rating: 4.8, district: t('districts.pastdargom') },
+              { name: 'Guli Ergasheva', skill: t('categories.cleaner'), rating: 4.8, district: t('districts.bulungur') }
             ].map((worker, i) => (
               <div key={i} className="bg-gray-50 p-6 rounded-[2rem] border border-gray-100 hover:shadow-xl transition-all group">
                 <div className="w-20 h-20 bg-white rounded-2xl mb-4 overflow-hidden border border-gray-100 shadow-inner">
@@ -281,23 +284,23 @@ export default function LandingPage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <h2 className="text-3xl md:text-5xl font-black text-white mb-8 tracking-tight">
-            Bugunoq oʻz faoliyatingizni boshlang
+            {t('landing.cta_title')}
           </h2>
           <p className="text-blue-100 text-xl mb-12 max-w-2xl mx-auto leading-relaxed">
-            Minglab ayollar allaqachon bizning platformamiz orqali oʻz daromadlarini topishmoqda. Siz ham ularga qoʻshiling!
+            {t('landing.cta_subtitle')}
           </p>
           <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
             <Link
               to="/auth"
               className="bg-white text-blue-600 px-10 py-5 rounded-2xl font-black text-xl hover:bg-blue-50 transition-all shadow-2xl"
             >
-              Roʻyxatdan oʻtish
+              {t('landing.register_now')}
             </Link>
             <Link
               to="/statistics"
               className="bg-blue-700 text-white px-10 py-5 rounded-2xl font-black text-xl hover:bg-blue-800 transition-all border border-blue-500"
             >
-              Statistikani koʻrish
+              {t('landing.view_stats')}
             </Link>
           </div>
         </div>

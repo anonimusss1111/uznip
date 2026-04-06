@@ -11,9 +11,13 @@ import Layout from '../components/Layout';
 import JobCard from '../components/JobCard';
 import { useAuth } from '../context/AuthContext';
 import ApplyModal from '../components/ApplyModal';
+import { getDistrictKey } from '../lib/utils';
+
+import { useTranslation } from 'react-i18next';
 
 export default function JobsPage() {
   const { profile, isDemo } = useAuth();
+  const { t } = useTranslation();
   const [jobs, setJobs] = React.useState<Job[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState('');
@@ -134,10 +138,10 @@ export default function JobsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight">
-              Oʻzingizga munosib <span className="text-blue-400">ishni toping</span>
+              {t('jobs.title')}
             </h1>
             <p className="text-slate-400 text-lg mb-10 font-medium max-w-xl">
-              Oʻzbekiston boʻylab minglab ishonchli xonadonlar va tadbirkorlar oʻz ishlarini sizga ishonishga tayyor.
+              {t('jobs.subtitle')}
             </p>
             
             <div className="flex flex-col md:flex-row gap-4">
@@ -145,7 +149,7 @@ export default function JobsPage() {
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-400 transition-colors" size={20} />
                 <input
                   type="text"
-                  placeholder="Ish qidirish (masalan: tozalash, repetitor...)"
+                  placeholder={t('jobs.search_placeholder')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full pl-14 pr-6 py-5 rounded-[24px] border-none focus:ring-4 focus:ring-blue-500/20 outline-none shadow-2xl text-lg bg-white transition-all"
@@ -156,7 +160,7 @@ export default function JobsPage() {
                 className="bg-white/10 backdrop-blur-xl border border-white/20 text-white px-8 py-5 rounded-[24px] font-black uppercase tracking-widest flex items-center justify-center hover:bg-white/20 transition-all group"
               >
                 <SlidersHorizontal size={20} className="mr-3 group-hover:rotate-180 transition-transform duration-500" />
-                Filtrlar
+                {t('jobs.filters')}
               </button>
             </div>
           </div>
@@ -174,7 +178,7 @@ export default function JobsPage() {
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 <div className="space-y-2">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Tuman</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">{t('jobs.district')}</label>
                   <div className="relative">
                     <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
                     <select
@@ -182,14 +186,14 @@ export default function JobsPage() {
                       onChange={(e) => setFilters({ ...filters, district: e.target.value })}
                       className="w-full pl-11 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:ring-2 focus:ring-blue-500 outline-none appearance-none font-bold text-slate-700"
                     >
-                      <option value="">Barcha tumanlar</option>
-                      {DISTRICTS["Samarqand viloyati"].map(d => <option key={d} value={d}>{d}</option>)}
+                      <option value="">{t('jobs.all_districts')}</option>
+                      {DISTRICTS["Samarqand viloyati"].map(d => <option key={d} value={d}>{t(`districts.${getDistrictKey(d)}`)}</option>)}
                     </select>
                     <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Toifa</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">{t('jobs.category')}</label>
                   <div className="relative">
                     <Briefcase size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
                     <select
@@ -197,14 +201,14 @@ export default function JobsPage() {
                       onChange={(e) => setFilters({ ...filters, category: e.target.value })}
                       className="w-full pl-11 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:ring-2 focus:ring-blue-500 outline-none appearance-none font-bold text-slate-700"
                     >
-                      <option value="">Barcha toifalar</option>
-                      {CATEGORIES.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                      <option value="">{t('jobs.all_categories')}</option>
+                      {CATEGORIES.map(c => <option key={c.id} value={c.id}>{t(`categories.${c.id}`)}</option>)}
                     </select>
                     <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Saralash</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">{t('jobs.sort_by')}</label>
                   <div className="relative">
                     <Filter size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
                     <select
@@ -212,9 +216,9 @@ export default function JobsPage() {
                       onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
                       className="w-full pl-11 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:ring-2 focus:ring-blue-500 outline-none appearance-none font-bold text-slate-700"
                     >
-                      <option value="newest">Eng yangi</option>
-                      <option value="price-low">Eng arzon</option>
-                      <option value="price-high">Eng qimmat</option>
+                      <option value="newest">{t('jobs.newest')}</option>
+                      <option value="price-low">{t('jobs.price_low')}</option>
+                      <option value="price-high">{t('jobs.price_high')}</option>
                     </select>
                     <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
                   </div>
@@ -225,13 +229,13 @@ export default function JobsPage() {
                   onClick={useMyLocation}
                   className="text-blue-600 text-xs font-black uppercase tracking-widest flex items-center hover:text-blue-700 transition-colors"
                 >
-                  <MapPin size={16} className="mr-2" /> Yaqindagi ishlar
+                  <MapPin size={16} className="mr-2" /> {t('jobs.nearby_jobs')}
                 </button>
                 <button
                   onClick={clearFilters}
                   className="text-slate-400 text-xs font-black uppercase tracking-widest hover:text-slate-600 transition-colors"
                 >
-                  Filtrlarni tozalash
+                  {t('jobs.clear_filters')}
                 </button>
               </div>
             </motion.div>
@@ -242,7 +246,7 @@ export default function JobsPage() {
           <div className="flex items-center gap-4">
             <div className="h-8 w-1.5 bg-blue-600 rounded-full" />
             <div className="text-slate-500 font-bold tracking-tight">
-              {loading ? 'Yuklanmoqda...' : `${filteredJobs.length} ta ish topildi`}
+              {loading ? t('jobs.loading') : t('jobs.found_jobs', { count: filteredJobs.length })}
             </div>
           </div>
           <div className="flex flex-wrap justify-center gap-2">
@@ -253,7 +257,7 @@ export default function JobsPage() {
             )}
             {filters.category && (
               <span className="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center border border-emerald-100">
-                {filters.category} <X size={14} className="ml-2 cursor-pointer hover:text-emerald-800" onClick={() => setFilters({...filters, category: ''})} />
+                {t(`categories.${filters.category}`, { defaultValue: filters.category })} <X size={14} className="ml-2 cursor-pointer hover:text-emerald-800" onClick={() => setFilters({...filters, category: ''})} />
               </span>
             )}
           </div>
@@ -276,13 +280,13 @@ export default function JobsPage() {
             <div className="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8 text-slate-200">
               <Search size={48} />
             </div>
-            <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Hech qanday ish topilmadi</h3>
-            <p className="text-slate-500 max-w-md mx-auto mb-10 leading-relaxed">Qidiruv parametrlarini oʻzgartirib koʻring yoki boshqa toifadagi ishlarni qidiring.</p>
+            <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">{t('jobs.no_jobs_found')}</h3>
+            <p className="text-slate-500 max-w-md mx-auto mb-10 leading-relaxed">{t('jobs.no_jobs_desc')}</p>
             <button
               onClick={clearFilters}
               className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-200"
             >
-              Filtrlarni tozalash
+              {t('jobs.clear_filters')}
             </button>
           </div>
         )}

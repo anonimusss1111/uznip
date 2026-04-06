@@ -6,14 +6,24 @@ import { collection, query, where, orderBy, getDocs, deleteDoc, doc } from 'fire
 import { ServicePost } from '../../types';
 import { Plus, Briefcase, MapPin, Clock, MoreVertical, Edit2, Trash2, Eye, EyeOff } from 'lucide-react';
 import { format } from 'date-fns';
-import { uz } from 'date-fns/locale';
+import { uz, ru, enUS } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
+import { getDistrictKey } from '../../lib/utils';
 
 export default function MyServicePosts() {
+  const { t, i18n } = useTranslation();
   const { profile } = useAuth();
-  const [posts, setPosts] = useState<ServicePost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<ServicePost[]>([]);
+  const getDateLocale = () => {
+    switch (i18n.language) {
+      case 'ru': return ru;
+      case 'en': return enUS;
+      default: return uz;
+    }
+  };
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -37,7 +47,9 @@ export default function MyServicePosts() {
   }, [profile]);
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Haqiqatan ham ushbu xizmatni oʻchirib tashlamoqchimisiz?')) return;
+    // For now, keeping it simple but using translation. 
+    // Ideally should be a custom modal.
+    if (!window.confirm(t('common.delete_confirm'))) return;
     setDeletingId(id);
     try {
       await deleteDoc(doc(db, 'service_posts', id));
@@ -54,15 +66,15 @@ export default function MyServicePosts() {
       <div className="space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold text-foreground tracking-tight">Mening xizmatlarim</h2>
-            <p className="text-muted-foreground mt-2">Siz taklif qilayotgan xizmatlar roʻyxati.</p>
+            <h2 className="text-3xl font-bold text-foreground tracking-tight">{t('worker_dashboard.my_services')}</h2>
+            <p className="text-muted-foreground mt-2">{t('worker_dashboard.my_services_desc')}</p>
           </div>
           <Link
             to="/worker/create-service"
             className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-2xl font-semibold shadow-lg shadow-primary/20 hover:scale-105 transition-all duration-200"
           >
             <Plus className="w-5 h-5" />
-            Yangi xizmat qoʻshish
+            {t('worker_dashboard.add_new_service')}
           </Link>
         </div>
 
@@ -105,7 +117,7 @@ export default function MyServicePosts() {
                       <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm ${
                         post.status === 'active' ? 'bg-green-500 text-white' : 'bg-amber-500 text-white'
                       }`}>
-                        {post.status === 'active' ? 'Faol' : 'Yashirilgan'}
+                        {post.status === 'active' ? t('employer_dashboard.active') : t('common.hidden')}
                       </span>
                     </div>
                   </div>
@@ -113,30 +125,30 @@ export default function MyServicePosts() {
                   <div className="p-6 space-y-4">
                     <div>
                       <h4 className="font-bold text-lg text-foreground line-clamp-1">{post.title}</h4>
-                      <p className="text-sm text-muted-foreground mt-1">{post.category}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{t(`categories.${post.category}`)}</p>
                     </div>
 
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-1 text-muted-foreground">
                         <MapPin className="w-4 h-4" />
-                        <span>{post.district}</span>
+                        <span>{t(`districts.${getDistrictKey(post.district)}`)}</span>
                       </div>
                       <div className="font-bold text-primary">
-                        {post.expectedPrice.toLocaleString()} UZS
+                        {post.expectedPrice.toLocaleString()} {t('common.uzs')}
                       </div>
                     </div>
 
                     <div className="pt-4 border-t border-border flex items-center justify-between">
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Clock className="w-3 h-3" />
-                        <span>{format(post.createdAt?.toDate?.() || new Date(), 'd MMM, yyyy', { locale: uz })}</span>
+                        <span>{format(post.createdAt?.toDate?.() || new Date(), 'd MMM, yyyy', { locale: getDateLocale() })}</span>
                       </div>
                       <Link 
                         to={`/worker/edit-service/${post.id}`}
                         className="flex items-center gap-1 text-sm font-bold text-primary hover:underline"
                       >
                         <Edit2 className="w-4 h-4" />
-                        Tahrirlash
+                        {t('common.edit')}
                       </Link>
                     </div>
                   </div>
@@ -147,16 +159,16 @@ export default function MyServicePosts() {
         ) : (
           <div className="bg-secondary/20 rounded-3xl p-12 text-center border-2 border-dashed border-border">
             <Briefcase className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-foreground">Hali xizmatlar qoʻshilmagan</h3>
+            <h3 className="text-xl font-bold text-foreground">{t('worker_dashboard.no_services')}</h3>
             <p className="text-muted-foreground mt-2 max-w-md mx-auto">
-              Oʻz xizmatlaringizni eʻlon qiling va ish beruvchilar sizni oʻzlari topishsin.
+              {t('worker_dashboard.no_services_desc')}
             </p>
             <Link
               to="/worker/create-service"
               className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-bold mt-8 hover:scale-105 transition-all"
             >
               <Plus className="w-5 h-5" />
-              Birinchi xizmatni qoʻshish
+              {t('worker_dashboard.add_first_service')}
             </Link>
           </div>
         )}

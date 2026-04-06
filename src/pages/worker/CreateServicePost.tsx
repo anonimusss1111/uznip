@@ -8,8 +8,11 @@ import { REGIONS, DISTRICTS } from '../../constants/locations';
 import { SKILLS } from '../../constants/categories';
 import { Briefcase, MapPin, CheckCircle, ArrowRight, ArrowLeft, Plus, Trash2, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
+import { getDistrictKey } from '../../lib/utils';
 
 export default function CreateServicePost() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -51,7 +54,7 @@ export default function CreateServicePost() {
       navigate('/worker/service-posts');
     } catch (error: any) {
       console.error('Error creating service post:', error);
-      setError('Xizmatni yaratishda xatolik yuz berdi. Iltimos, qaytadan urinib koʻring.');
+      setError(t('common.error_occurred'));
     } finally {
       setLoading(false);
     }
@@ -79,15 +82,15 @@ export default function CreateServicePost() {
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold text-foreground tracking-tight">Yangi xizmat eʻlon qilish</h2>
-            <p className="text-muted-foreground mt-2">Oʻz mahoratingizni koʻrsating va ish beruvchilarni jalb qiling.</p>
+            <h2 className="text-3xl font-bold text-foreground tracking-tight">{t('worker_dashboard.post_service')}</h2>
+            <p className="text-muted-foreground mt-2">{t('worker_dashboard.post_service_desc')}</p>
           </div>
           <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-2 px-4 py-2 text-muted-foreground hover:text-primary transition-all font-bold"
           >
             <ArrowLeft className="w-5 h-5" />
-            Orqaga
+            {t('common.back')}
           </button>
         </div>
 
@@ -95,34 +98,34 @@ export default function CreateServicePost() {
           <div className="bg-card p-8 rounded-3xl border border-border shadow-sm space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Xizmat nomi</label>
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{t('employer_dashboard.job_title')}</label>
                 <input
                   type="text"
                   required
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   className="w-full px-4 py-3.5 rounded-2xl border border-border bg-background text-foreground focus:ring-2 focus:ring-primary outline-none transition-all"
-                  placeholder="Masalan: Professional enaga xizmati"
+                  placeholder={t('employer_dashboard.job_title_placeholder')}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Kategoriya</label>
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{t('jobs.category')}</label>
                 <select
                   required
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   className="w-full px-4 py-3.5 rounded-2xl border border-border bg-background text-foreground focus:ring-2 focus:ring-primary outline-none transition-all"
                 >
-                  <option value="">Tanlang</option>
+                  <option value="">{t('common.select')}</option>
                   {SKILLS.map(skill => (
-                    <option key={skill} value={skill}>{skill}</option>
+                    <option key={skill.id} value={skill.id}>{t(`skills.${skill.id}`)}</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Kutilayotgan narx (UZS)</label>
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{t('employer_dashboard.offered_price')} ({t('common.uzs')})</label>
                 <input
                   type="number"
                   required
@@ -134,14 +137,14 @@ export default function CreateServicePost() {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Batafsil maʻlumot</label>
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{t('jobs.description')}</label>
                 <textarea
                   required
                   rows={4}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full px-4 py-3.5 rounded-2xl border border-border bg-background text-foreground focus:ring-2 focus:ring-primary outline-none transition-all resize-none"
-                  placeholder="Xizmatlaringiz haqida batafsil yozing..."
+                  placeholder={t('employer_dashboard.job_desc_placeholder')}
                 />
               </div>
             </div>
@@ -150,26 +153,26 @@ export default function CreateServicePost() {
           <div className="bg-card p-8 rounded-3xl border border-border shadow-sm space-y-6">
             <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
               <MapPin className="w-5 h-5 text-primary" />
-              Xizmat koʻrsatish hududi
+              {t('landing.geo_based')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Viloyat</label>
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{t('profile.region')}</label>
                 <select
                   required
                   value={formData.region}
                   onChange={(e) => setFormData({ ...formData, region: e.target.value, district: '' })}
                   className="w-full px-4 py-3.5 rounded-2xl border border-border bg-background text-foreground focus:ring-2 focus:ring-primary outline-none transition-all"
                 >
-                  <option value="">Tanlang</option>
+                  <option value="">{t('common.select')}</option>
                   {REGIONS.map(r => (
-                    <option key={r} value={r}>{r}</option>
+                    <option key={r} value={r}>{t('common.region_name', { defaultValue: r })}</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Tuman / Shahar</label>
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{t('profile.district')}</label>
                 <select
                   required
                   disabled={!formData.region}
@@ -177,21 +180,21 @@ export default function CreateServicePost() {
                   onChange={(e) => setFormData({ ...formData, district: e.target.value })}
                   className="w-full px-4 py-3.5 rounded-2xl border border-border bg-background text-foreground focus:ring-2 focus:ring-primary outline-none transition-all disabled:opacity-50"
                 >
-                  <option value="">Tanlang</option>
+                  <option value="">{t('common.select')}</option>
                   {formData.region && DISTRICTS[formData.region as keyof typeof DISTRICTS]?.map(d => (
-                    <option key={d} value={d}>{d}</option>
+                    <option key={d} value={d}>{t(`districts.${getDistrictKey(d)}`)}</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Mahalla (ixtiyoriy)</label>
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{t('profile.neighborhood')} ({t('common.optional')})</label>
                 <input
                   type="text"
                   value={formData.neighborhood}
                   onChange={(e) => setFormData({ ...formData, neighborhood: e.target.value })}
                   className="w-full px-4 py-3.5 rounded-2xl border border-border bg-background text-foreground focus:ring-2 focus:ring-primary outline-none transition-all"
-                  placeholder="Masalan: Bogʻishamol"
+                  placeholder={t('auth.neighborhood_placeholder')}
                 />
               </div>
             </div>
@@ -200,7 +203,7 @@ export default function CreateServicePost() {
           <div className="bg-card p-8 rounded-3xl border border-border shadow-sm space-y-6">
             <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
               <ImageIcon className="w-5 h-5 text-primary" />
-              Rasmlar (ixtiyoriy)
+              {t('common.images')} ({t('common.optional')})
             </h3>
             <div className="space-y-4">
               <div className="flex gap-2">
@@ -209,14 +212,14 @@ export default function CreateServicePost() {
                   value={formData.customImageUrl}
                   onChange={(e) => setFormData({ ...formData, customImageUrl: e.target.value })}
                   className="flex-1 px-4 py-3.5 rounded-2xl border border-border bg-background text-foreground focus:ring-2 focus:ring-primary outline-none transition-all"
-                  placeholder="Rasm URL manzilini kiriting..."
+                  placeholder={t('common.image_url_placeholder')}
                 />
                 <button
                   type="button"
                   onClick={addImage}
                   className="px-6 py-3 bg-secondary text-foreground rounded-2xl font-bold hover:bg-accent transition-all"
                 >
-                  Qoʻshish
+                  {t('auth.add')}
                 </button>
               </div>
               
@@ -249,14 +252,14 @@ export default function CreateServicePost() {
               onClick={() => navigate(-1)}
               className="px-8 py-4 text-muted-foreground font-bold hover:text-foreground transition-all"
             >
-              Bekor qilish
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               disabled={loading}
               className="px-12 py-4 bg-primary text-primary-foreground rounded-2xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all duration-200 disabled:opacity-50"
             >
-              {loading ? 'Yaratilmoqda...' : 'Eʻlonni joylashtirish'}
+              {loading ? t('common.saving') : t('common.post')}
             </button>
           </div>
         </form>

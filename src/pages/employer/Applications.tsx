@@ -8,10 +8,13 @@ import { motion, AnimatePresence } from 'motion/react';
 import { User, Briefcase, MessageSquare, CheckCircle, XCircle, Clock, MapPin, Phone, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
-import { uz } from 'date-fns/locale';
+import { uz, ru, enUS } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
+import { getDistrictKey } from '../../lib/utils';
 
 export default function EmployerApplications() {
-  const { profile } = useAuth();
+  const { t, i18n } = useTranslation();
+  const { profile, isDemo } = useAuth();
   const [applications, setApplications] = useState<(Application & { worker?: Profile; job?: Job })[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -20,6 +23,13 @@ export default function EmployerApplications() {
     async function fetchApplications() {
       if (!profile?.uid) return;
       setLoading(true);
+
+      if (isDemo) {
+        setApplications([]);
+        setLoading(false);
+        return;
+      }
+
       try {
         const q = query(
           collection(db, 'applications'),
@@ -64,13 +74,31 @@ export default function EmployerApplications() {
     ? applications 
     : applications.filter(app => app.status === filterStatus);
 
+  const getDateLocale = () => {
+    switch (i18n.language) {
+      case 'ru': return ru;
+      case 'en': return enUS;
+      default: return uz;
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'all': return t('common.all');
+      case 'pending': return t('employer.dashboard.pending');
+      case 'accepted': return t('employer.dashboard.accept');
+      case 'rejected': return t('employer.dashboard.rejected');
+      default: return status;
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-foreground tracking-tight">Arizalar boshqaruvi</h2>
-            <p className="text-muted-foreground mt-2">Sizning eʻlonlaringizga kelib tushgan barcha arizalar.</p>
+            <h2 className="text-3xl font-bold text-foreground tracking-tight">{t('employer.dashboard.applications_management')}</h2>
+            <p className="text-muted-foreground mt-2">{t('employer.dashboard.applications_management_desc')}</p>
           </div>
           
           <div className="flex bg-secondary/50 p-1 rounded-2xl border border-border">
@@ -84,7 +112,7 @@ export default function EmployerApplications() {
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {status === 'all' ? 'Barchasi' : status === 'pending' ? 'Kutilmoqda' : status === 'accepted' ? 'Qabul' : 'Rad etilgan'}
+                {getStatusLabel(status)}
               </button>
             ))}
           </div>
@@ -122,7 +150,7 @@ export default function EmployerApplications() {
                           )}
                         </div>
                         <div>
-                          <h4 className="text-xl font-bold text-foreground">{app.worker?.fullName || 'Nomaʻlum'}</h4>
+                          <h4 className="text-xl font-bold text-foreground">{app.worker?.fullName || t('common.unknown_worker')}</h4>
                           <div className="flex items-center gap-1 text-amber-500 text-sm font-bold mt-1">
                             <Star size={14} fill="currentColor" />
                             <span>{app.worker?.rating || '0.0'}</span>
@@ -132,7 +160,7 @@ export default function EmployerApplications() {
                               to={`/worker/${app.workerId}`}
                               className="text-xs font-bold text-primary hover:underline"
                             >
-                              Profilni koʻrish
+                              {t('profile.view_profile')}
                             </Link>
                           </div>
                         </div>
@@ -142,7 +170,7 @@ export default function EmployerApplications() {
                       <div className="flex-1 space-y-4">
                         <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
                           <Briefcase size={14} />
-                          <span>Ish: {app.job?.title || 'Oʻchirilgan ish'}</span>
+                          <span>{t('jobs.job')}: {app.job?.title || t('jobs.deleted_job')}</span>
                         </div>
                         
                         <div className="bg-secondary/30 p-5 rounded-2xl border border-border/50 italic text-muted-foreground text-sm leading-relaxed">
@@ -152,11 +180,11 @@ export default function EmployerApplications() {
                         <div className="flex flex-wrap gap-4 text-xs text-muted-foreground font-medium">
                           <span className="flex items-center gap-1.5">
                             <Clock size={14} />
-                            {app.createdAt ? format(app.createdAt.toDate(), 'd-MMMM, HH:mm', { locale: uz }) : 'Yaqinda'}
+                            {app.createdAt ? format(app.createdAt.toDate(), 'd-MMMM, HH:mm', { locale: getDateLocale() }) : t('common.recently')}
                           </span>
                           <span className="flex items-center gap-1.5">
                             <MapPin size={14} />
-                            {app.worker?.district}, {app.worker?.region}
+                            {t(`districts.${getDistrictKey(app.worker?.district)}`)}, {t('common.region_name', { defaultValue: app.worker?.region })}
                           </span>
                         </div>
                       </div>
@@ -170,14 +198,14 @@ export default function EmployerApplications() {
                               className="w-full py-3 bg-green-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-700 transition-all shadow-lg shadow-green-600/20"
                             >
                               <CheckCircle size={18} />
-                              Qabul qilish
+                              {t('employer.dashboard.accept')}
                             </button>
                             <button
                               onClick={() => handleStatusUpdate(app.id, 'rejected')}
                               className="w-full py-3 bg-card text-destructive border border-destructive/20 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-destructive/5 transition-all"
                             >
                               <XCircle size={18} />
-                              Rad etish
+                              {t('employer.dashboard.reject')}
                             </button>
                           </>
                         ) : app.status === 'accepted' ? (
@@ -186,12 +214,12 @@ export default function EmployerApplications() {
                             className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-lg shadow-primary/20"
                           >
                             <CheckCircle size={18} />
-                            Shartnoma tuzish
+                            {t('employer.dashboard.create_contract')}
                           </Link>
                         ) : (
                           <div className="py-3 bg-red-50 text-red-700 border border-red-100 rounded-xl font-bold flex items-center justify-center gap-2">
                             <XCircle size={18} />
-                            Rad etilgan
+                            {t('employer.dashboard.rejected')}
                           </div>
                         )}
                         
@@ -200,7 +228,7 @@ export default function EmployerApplications() {
                           className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20"
                         >
                           <MessageSquare size={18} />
-                          Chat boshlash
+                          {t('common.start_chat')}
                         </Link>
                       </div>
                     </div>
@@ -214,8 +242,8 @@ export default function EmployerApplications() {
             <div className="w-20 h-20 bg-card rounded-full flex items-center justify-center mx-auto mb-6 text-muted-foreground shadow-sm">
               <Briefcase size={40} />
             </div>
-            <h3 className="text-xl font-bold text-foreground">Arizalar topilmadi</h3>
-            <p className="text-muted-foreground mt-2">Hozircha hech kim ariza topshirmagan.</p>
+            <h3 className="text-xl font-bold text-foreground">{t('employer.dashboard.no_applications')}</h3>
+            <p className="text-muted-foreground mt-2">{t('employer.dashboard.no_applications_desc')}</p>
           </div>
         )}
       </div>

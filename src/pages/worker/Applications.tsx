@@ -8,17 +8,34 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Briefcase, Clock, MapPin, CheckCircle, XCircle, MessageSquare, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
-import { uz } from 'date-fns/locale';
+import { uz, ru, enUS } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
+import { getDistrictKey } from '../../lib/utils';
 
 export default function WorkerApplications() {
-  const { profile } = useAuth();
-  const [applications, setApplications] = useState<(Application & { job?: Job; employer?: Profile })[]>([]);
+  const { t, i18n } = useTranslation();
+  const { profile, isDemo } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [applications, setApplications] = useState<(Application & { job?: Job; employer?: Profile })[]>([]);
+  const getDateLocale = () => {
+    switch (i18n.language) {
+      case 'ru': return ru;
+      case 'en': return enUS;
+      default: return uz;
+    }
+  };
 
   useEffect(() => {
     async function fetchMyApplications() {
       if (!profile?.uid) return;
       setLoading(true);
+
+      if (isDemo) {
+        setApplications([]);
+        setLoading(false);
+        return;
+      }
+
       try {
         const q = query(
           collection(db, 'applications'),
@@ -53,8 +70,8 @@ export default function WorkerApplications() {
     <DashboardLayout>
       <div className="space-y-8">
         <div>
-          <h2 className="text-3xl font-bold text-foreground tracking-tight">Mening arizalarim</h2>
-          <p className="text-muted-foreground mt-2">Siz topshirgan barcha ish arizalari va ularning holati.</p>
+          <h2 className="text-3xl font-bold text-foreground tracking-tight">{t('worker_dashboard.my_applications')}</h2>
+          <p className="text-muted-foreground mt-2">{t('worker_dashboard.my_applications_desc')}</p>
         </div>
 
         {loading ? (
@@ -83,11 +100,11 @@ export default function WorkerApplications() {
                           </div>
                           <div>
                             <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
-                              {app.job?.title || 'Oʻchirilgan ish'}
+                              {app.job?.title || t('jobs.deleted_job')}
                             </h3>
                             <div className="flex items-center gap-3 text-xs text-muted-foreground font-medium mt-1">
-                              <span className="flex items-center gap-1"><MapPin size={14} /> {app.job?.district}, {app.job?.region}</span>
-                              <span className="flex items-center gap-1"><Clock size={14} /> {app.createdAt ? format(app.createdAt.toDate(), 'd MMM, HH:mm', { locale: uz }) : 'Yaqinda'}</span>
+                              <span className="flex items-center gap-1"><MapPin size={14} /> {t(`districts.${getDistrictKey(app.job?.district)}`)}, {t('common.region_name', { defaultValue: app.job?.region })}</span>
+                              <span className="flex items-center gap-1"><Clock size={14} /> {app.createdAt ? format(app.createdAt.toDate(), 'd MMM, HH:mm', { locale: getDateLocale() }) : t('common.recently')}</span>
                             </div>
                           </div>
                         </div>
@@ -106,9 +123,9 @@ export default function WorkerApplications() {
                           {app.status === 'pending' ? <Clock size={14} /> : 
                            app.status === 'accepted' ? <CheckCircle size={14} /> : 
                            <XCircle size={14} />}
-                          {app.status === 'pending' ? 'Kutilmoqda' : 
-                           app.status === 'accepted' ? 'Qabul qilindi' : 
-                           'Rad etildi'}
+                          {app.status === 'pending' ? t('worker_dashboard.pending') : 
+                           app.status === 'accepted' ? t('worker_dashboard.accepted') : 
+                           t('worker_dashboard.rejected')}
                         </div>
 
                         <div className="flex gap-2 w-full">
@@ -117,7 +134,7 @@ export default function WorkerApplications() {
                             className="flex-1 py-3 bg-secondary text-foreground rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-accent transition-all"
                           >
                             <MessageSquare size={18} />
-                            Chat
+                            {t('nav.chat')}
                           </Link>
                           <Link
                             to={`/jobs`}
@@ -136,13 +153,13 @@ export default function WorkerApplications() {
         ) : (
           <div className="bg-secondary/20 rounded-[40px] p-20 text-center border-2 border-dashed border-border">
             <Briefcase size={40} className="text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-foreground">Arizalar topilmadi</h3>
-            <p className="text-muted-foreground mt-2">Hali hech qanday ishga ariza topshirmagansiz.</p>
+            <h3 className="text-xl font-bold text-foreground">{t('worker_dashboard.no_applications')}</h3>
+            <p className="text-muted-foreground mt-2">{t('worker_dashboard.no_applications_desc')}</p>
             <Link
               to="/jobs"
               className="mt-6 inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all"
             >
-              Ish qidirishni boshlash
+              {t('worker_dashboard.start_searching')}
             </Link>
           </div>
         )}

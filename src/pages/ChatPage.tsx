@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc, getDocs } from 'firebase/firestore';
@@ -8,9 +9,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import Layout from '../components/Layout';
 import { useAuth } from '../hooks/useAuth';
 import { format } from 'date-fns';
-import { uz } from 'date-fns/locale';
+import { uz, ru, enUS } from 'date-fns/locale';
 
 export default function ChatPage() {
+  const { t, i18n } = useTranslation();
   const { user, profile } = useAuth();
   const [searchParams] = useSearchParams();
   const withUserId = searchParams.get('with');
@@ -132,7 +134,15 @@ export default function ChatPage() {
     }
   };
 
-  if (loading) return <Layout><div className="p-8">Yuklanmoqda...</div></Layout>;
+  if (loading) return <Layout><div className="p-8">{t('common.loading')}...</div></Layout>;
+
+  const getDateLocale = () => {
+    switch (i18n.language) {
+      case 'ru': return ru;
+      case 'en': return enUS;
+      default: return uz;
+    }
+  };
 
   return (
     <Layout>
@@ -142,8 +152,8 @@ export default function ChatPage() {
             <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 mb-6">
               <MessageSquare size={40} />
             </div>
-            <h2 className="text-2xl font-black text-gray-900 mb-2">Xabarlar</h2>
-            <p className="text-gray-500 max-w-xs">Suhbatni boshlash uchun ishchi yoki ish beruvchi profiliga oʻting.</p>
+            <h2 className="text-2xl font-black text-gray-900 mb-2">{t('chat.title')}</h2>
+            <p className="text-gray-500 max-w-xs">{t('chat.no_chat_selected')}</p>
           </div>
         ) : (
           <div className="flex-1 flex flex-col bg-white rounded-[40px] border border-gray-100 shadow-2xl overflow-hidden">
@@ -165,7 +175,7 @@ export default function ChatPage() {
                   <h3 className="font-bold text-gray-900 leading-tight">{chatPartner?.fullName}</h3>
                   <div className="flex items-center text-[10px] text-green-500 font-bold uppercase tracking-widest">
                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5 animate-pulse"></div>
-                    Onlayn
+                    {t('chat.online')}
                   </div>
                 </div>
               </div>
@@ -187,7 +197,7 @@ export default function ChatPage() {
                     <Briefcase size={16} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">Ish boʻyicha suhbat</p>
+                    <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">{t('chat.job_context')}</p>
                     <p className="text-xs font-bold text-gray-900">{jobContext.title}</p>
                   </div>
                 </div>
@@ -195,13 +205,13 @@ export default function ChatPage() {
                   <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-blue-100 shadow-sm">
                     <FileText size={14} className="text-blue-600" />
                     <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">
-                      Shartnoma: {contract.status === 'draft' ? 'Qoralama' : contract.status === 'active' ? 'Faol' : 'Yakunlangan'}
+                      {t('chat.contract')}: {contract.status === 'draft' ? t('chat.contract_draft') : contract.status === 'active' ? t('chat.contract_active') : t('chat.contract_completed')}
                     </span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-100">
                     <Clock size={14} className="text-amber-600" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-600">Ariza jarayonda</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-600">{t('chat.application_pending')}</span>
                   </div>
                 )}
               </div>
@@ -211,8 +221,8 @@ export default function ChatPage() {
             <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/50">
               {messages.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center opacity-40">
-                  <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">Suhbat boshlanmagan</p>
-                  <p className="text-xs text-gray-400">Salom deb yozing!</p>
+                  <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">{t('chat.no_messages')}</p>
+                  <p className="text-xs text-gray-400">{t('chat.say_hello')}</p>
                 </div>
               ) : (
                 messages.map((msg, idx) => {
@@ -227,7 +237,7 @@ export default function ChatPage() {
                       <div className={`max-w-[75%] px-5 py-3 rounded-3xl shadow-sm ${isMe ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'}`}>
                         <p className="text-sm leading-relaxed">{msg.text}</p>
                         <div className={`text-[9px] mt-1 font-bold uppercase tracking-widest opacity-60 ${isMe ? 'text-blue-100' : 'text-gray-400'}`}>
-                          {msg.createdAt ? format(new Date(msg.createdAt.seconds * 1000), 'HH:mm') : 'Hozir'}
+                          {msg.createdAt ? format(new Date(msg.createdAt.seconds * 1000), 'HH:mm') : t('chat.now')}
                         </div>
                       </div>
                     </motion.div>
@@ -244,7 +254,7 @@ export default function ChatPage() {
                   type="text"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  placeholder="Xabar yozing..."
+                  placeholder={t('chat.placeholder')}
                   className="flex-1 bg-transparent border-none focus:ring-0 outline-none px-3 py-2 text-sm"
                 />
                 <button

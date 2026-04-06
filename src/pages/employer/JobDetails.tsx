@@ -23,9 +23,12 @@ import {
   Star
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { uz } from 'date-fns/locale';
+import { uz, ru, enUS } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
+import { getDistrictKey } from '../../lib/utils';
 
 export default function EmployerJobDetails() {
+  const { t, i18n } = useTranslation();
   const { jobId } = useParams();
   const { profile } = useAuth();
   const navigate = useNavigate();
@@ -75,7 +78,7 @@ export default function EmployerJobDetails() {
   };
 
   const handleDeleteJob = async () => {
-    if (!jobId || !window.confirm('Haqiqatan ham ushbu ishni oʻchirmoqchimisiz?')) return;
+    if (!jobId || !window.confirm(t('employer.dashboard.delete_job_confirm'))) return;
     try {
       await deleteDoc(doc(db, 'jobs', jobId));
       navigate('/employer/dashboard');
@@ -84,8 +87,16 @@ export default function EmployerJobDetails() {
     }
   };
 
-  if (loading) return <DashboardLayout><div className="p-8 animate-pulse">Yuklanmoqda...</div></DashboardLayout>;
-  if (!job) return <DashboardLayout><div className="p-8">Ish topilmadi.</div></DashboardLayout>;
+  const getDateLocale = () => {
+    switch (i18n.language) {
+      case 'ru': return ru;
+      case 'en': return enUS;
+      default: return uz;
+    }
+  };
+
+  if (loading) return <DashboardLayout><div className="p-8 animate-pulse">{t('common.loading')}...</div></DashboardLayout>;
+  if (!job) return <DashboardLayout><div className="p-8">{t('jobs.not_found')}</div></DashboardLayout>;
 
   return (
     <DashboardLayout>
@@ -94,7 +105,7 @@ export default function EmployerJobDetails() {
         <div className="flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground hover:text-foreground font-bold transition-colors">
             <ChevronLeft size={20} />
-            Orqaga qaytish
+            {t('common.back')}
           </button>
           <div className="relative">
             <button 
@@ -112,13 +123,13 @@ export default function EmployerJobDetails() {
                   className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-2xl shadow-xl z-20 overflow-hidden"
                 >
                   <button className="w-full px-4 py-3 text-left text-sm font-bold flex items-center gap-3 hover:bg-secondary transition-all">
-                    <Edit size={16} /> Tahrirlash
+                    <Edit size={16} /> {t('common.edit')}
                   </button>
                   <button 
                     onClick={handleDeleteJob}
                     className="w-full px-4 py-3 text-left text-sm font-bold flex items-center gap-3 text-destructive hover:bg-destructive/5 transition-all"
                   >
-                    <Trash2 size={16} /> Oʻchirish
+                    <Trash2 size={16} /> {t('common.delete')}
                   </button>
                 </motion.div>
               )}
@@ -132,12 +143,12 @@ export default function EmployerJobDetails() {
             <div className="bg-card rounded-[40px] border border-border p-8 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
                 <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-black uppercase tracking-widest">
-                  {job.category}
+                  {t(`categories.${job.category}`, { defaultValue: job.category })}
                 </span>
                 <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest ${
                   job.status === 'open' ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-500'
                 }`}>
-                  {job.status === 'open' ? 'Faol' : 'Yopilgan'}
+                  {job.status === 'open' ? t('jobs.status_active') : t('jobs.status_closed')}
                 </span>
               </div>
               
@@ -149,8 +160,8 @@ export default function EmployerJobDetails() {
                     <MapPin size={20} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Manzil</p>
-                    <p className="text-sm font-bold">{job.district}, {job.region}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t('profile.location')}</p>
+                    <p className="text-sm font-bold">{t(`districts.${getDistrictKey(job.district)}`)}, {t('common.region_name', { defaultValue: job.region })}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -158,8 +169,8 @@ export default function EmployerJobDetails() {
                     <DollarSign size={20} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Ish haqi</p>
-                    <p className="text-sm font-bold">{job.price.toLocaleString()} UZS</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t('jobs.price')}</p>
+                    <p className="text-sm font-bold">{job.price.toLocaleString()} {t('common.uzs')}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -167,14 +178,14 @@ export default function EmployerJobDetails() {
                     <Clock size={20} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Sana</p>
-                    <p className="text-sm font-bold">{format(job.createdAt?.toDate?.() || new Date(), 'd MMM, yyyy', { locale: uz })}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t('common.date')}</p>
+                    <p className="text-sm font-bold">{format(job.createdAt?.toDate?.() || new Date(), 'd MMM, yyyy', { locale: getDateLocale() })}</p>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-lg font-bold text-foreground">Ish tavsifi</h3>
+                <h3 className="text-lg font-bold text-foreground">{t('jobs.description')}</h3>
                 <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
                   {job.description}
                 </p>
@@ -186,7 +197,7 @@ export default function EmployerJobDetails() {
               <div className="flex items-center justify-between">
                 <h3 className="text-2xl font-black text-foreground flex items-center gap-3">
                   <Users className="w-6 h-6 text-primary" />
-                  Arizalar ({applications.length})
+                  {t('employer.dashboard.applications')} ({applications.length})
                 </h3>
               </div>
 
@@ -210,7 +221,7 @@ export default function EmployerJobDetails() {
                           )}
                         </div>
                         <div>
-                          <h4 className="font-bold text-foreground text-lg">{app.worker?.fullName}</h4>
+                          <h4 className="font-bold text-foreground text-lg">{app.worker?.fullName || t('common.unknown_worker')}</h4>
                           <div className="flex items-center gap-1 text-amber-500 text-xs font-bold mt-0.5">
                             <Star size={12} fill="currentColor" />
                             <span>{app.worker?.rating || '0.0'} ({app.worker?.reviewCount || 0})</span>
@@ -226,20 +237,20 @@ export default function EmployerJobDetails() {
                               onClick={() => handleStatusUpdate(app.id, 'accepted')}
                               className="flex-1 md:flex-none px-6 py-2.5 bg-green-600 text-white rounded-xl font-bold text-sm hover:bg-green-700 transition-all"
                             >
-                              Qabul
+                              {t('employer.dashboard.accept')}
                             </button>
                             <button
                               onClick={() => handleStatusUpdate(app.id, 'rejected')}
                               className="flex-1 md:flex-none px-6 py-2.5 bg-secondary text-destructive rounded-xl font-bold text-sm hover:bg-destructive/5 transition-all"
                             >
-                              Rad etish
+                              {t('employer.dashboard.reject')}
                             </button>
                           </>
                         ) : (
                           <div className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest ${
                             app.status === 'accepted' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
                           }`}>
-                            {app.status === 'accepted' ? 'Qabul qilindi' : 'Rad etildi'}
+                            {app.status === 'accepted' ? t('employer.dashboard.accepted') : t('employer.dashboard.rejected')}
                           </div>
                         )}
                         <Link
@@ -253,7 +264,7 @@ export default function EmployerJobDetails() {
                   ))
                 ) : (
                   <div className="bg-secondary/20 rounded-3xl p-12 text-center border-2 border-dashed border-border">
-                    <p className="text-muted-foreground font-medium">Hozircha arizalar yoʻq.</p>
+                    <p className="text-muted-foreground font-medium">{t('employer.dashboard.no_applications')}</p>
                   </div>
                 )}
               </div>
@@ -263,32 +274,32 @@ export default function EmployerJobDetails() {
           {/* Sidebar / Stats */}
           <div className="space-y-6">
             <div className="bg-card rounded-[32px] border border-border p-6 shadow-sm space-y-6">
-              <h3 className="font-bold text-foreground uppercase tracking-widest text-xs text-muted-foreground">Ish statistikasi</h3>
+              <h3 className="font-bold text-foreground uppercase tracking-widest text-xs text-muted-foreground">{t('employer.dashboard.job_stats')}</h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Koʻrishlar soni</span>
+                  <span className="text-sm text-muted-foreground">{t('employer.dashboard.views_count')}</span>
                   <span className="font-bold">124</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Arizalar soni</span>
+                  <span className="text-sm text-muted-foreground">{t('employer.dashboard.applications_count')}</span>
                   <span className="font-bold">{applications.length}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Status</span>
-                  <span className="text-green-600 font-bold">Faol</span>
+                  <span className="text-sm text-muted-foreground">{t('employer.dashboard.status')}</span>
+                  <span className="text-green-600 font-bold">{job.status === 'open' ? t('jobs.status_active') : t('jobs.status_closed')}</span>
                 </div>
               </div>
               <div className="pt-6 border-t border-border">
                 <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest leading-relaxed">
-                  Ushbu ish eʻloni 30 kundan keyin avtomatik ravishda yopiladi.
+                  {t('employer.dashboard.job_auto_close_desc')}
                 </p>
               </div>
             </div>
 
             <div className="bg-primary/5 rounded-[32px] border border-primary/20 p-6 space-y-4">
-              <h4 className="font-bold text-primary">Maslahat</h4>
+              <h4 className="font-bold text-primary">{t('common.tip')}</h4>
               <p className="text-sm text-primary/80 leading-relaxed">
-                Ishchilarni tanlashda ularning reytingi va avvalgi ish beruvchilar fikrlariga eʻtibor bering.
+                {t('employer.dashboard.hiring_tip')}
               </p>
             </div>
           </div>

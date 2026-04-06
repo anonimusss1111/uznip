@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { db } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { motion } from 'motion/react';
@@ -7,8 +8,10 @@ import Layout from '../components/Layout';
 import { useAuth } from '../hooks/useAuth';
 import { REGIONS, DISTRICTS } from '../constants/locations';
 import { SKILLS } from '../constants/categories';
+import { getDistrictKey } from '../lib/utils';
 
 export default function MyProfilePage() {
+  const { t } = useTranslation();
   const { profile, loading: authLoading } = useAuth();
   const [isEditing, setIsEditing] = React.useState(false);
   const [formData, setFormData] = React.useState({
@@ -60,21 +63,21 @@ export default function MyProfilePage() {
     }));
   };
 
-  if (authLoading) return <Layout><div className="p-8">Yuklanmoqda...</div></Layout>;
-  if (!profile) return <Layout><div className="p-8">Profil topilmadi.</div></Layout>;
+  if (authLoading) return <Layout><div className="p-8">{t('common.loading')}...</div></Layout>;
+  if (!profile) return <Layout><div className="p-8">{t('profile.not_found')}</div></Layout>;
 
   return (
     <Layout>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Shaxsiy kabinet</h1>
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight">{t('profile.title')}</h1>
           {!isEditing ? (
             <button
               onClick={() => setIsEditing(true)}
               className="flex items-center space-x-2 bg-white border border-gray-200 px-6 py-3 rounded-2xl font-bold text-gray-700 hover:bg-gray-50 transition-all shadow-sm"
             >
               <Settings size={20} />
-              <span>Tahrirlash</span>
+              <span>{t('profile.edit')}</span>
             </button>
           ) : (
             <div className="flex space-x-3">
@@ -82,7 +85,7 @@ export default function MyProfilePage() {
                 onClick={() => setIsEditing(false)}
                 className="px-6 py-3 rounded-2xl font-bold text-gray-500 hover:text-gray-700"
               >
-                Bekor qilish
+                {t('profile.cancel')}
               </button>
               <button
                 onClick={handleSave}
@@ -90,7 +93,7 @@ export default function MyProfilePage() {
                 className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg disabled:opacity-50"
               >
                 <Save size={20} />
-                <span>{saving ? 'Saqlanmoqda...' : 'Saqlash'}</span>
+                <span>{saving ? t('profile.saving') : t('profile.save')}</span>
               </button>
             </div>
           )}
@@ -110,35 +113,35 @@ export default function MyProfilePage() {
               </div>
               <h2 className="text-xl font-black text-gray-900 mb-1">{profile.fullName}</h2>
               <div className="bg-blue-50 text-blue-600 text-[10px] font-bold px-3 py-1 rounded-full inline-block uppercase tracking-widest mb-4">
-                {profile.role === 'worker' ? 'Ish qidiruvchi' : 'Ish beruvchi'}
+                {profile.role === 'worker' ? t('auth.worker') : t('auth.employer')}
               </div>
               
               {profile.role === 'worker' && (
                 <div className="flex justify-around pt-6 border-t border-gray-50 mt-6">
                   <div className="text-center">
                     <div className="text-lg font-black text-gray-900">{profile.rating || 0}</div>
-                    <div className="text-[10px] font-bold text-gray-400 uppercase">Reyting</div>
+                    <div className="text-[10px] font-bold text-gray-400 uppercase">{t('profile.rating')}</div>
                   </div>
                   <div className="text-center">
                     <div className="text-lg font-black text-gray-900">{profile.completedJobs || 0}</div>
-                    <div className="text-[10px] font-bold text-gray-400 uppercase">Ishlar</div>
+                    <div className="text-[10px] font-bold text-gray-400 uppercase">{t('profile.jobs')}</div>
                   </div>
                 </div>
               )}
             </div>
 
             <div className="bg-blue-600 rounded-[32px] p-8 text-white shadow-xl">
-              <h3 className="text-sm font-bold uppercase tracking-widest mb-4 opacity-80">Holatingiz</h3>
+              <h3 className="text-sm font-bold uppercase tracking-widest mb-4 opacity-80">{t('profile.status')}</h3>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Profil toʻliqligi</span>
+                  <span className="text-sm">{t('profile.completeness')}</span>
                   <span className="text-sm font-bold">85%</span>
                 </div>
                 <div className="w-full bg-blue-500 h-2 rounded-full overflow-hidden">
                   <div className="bg-white h-full w-[85%]"></div>
                 </div>
                 <p className="text-xs opacity-70 leading-relaxed">
-                  Profilni 100% toʻldiring va koʻproq ish takliflarini oling.
+                  {t('profile.completeness_desc')}
                 </p>
               </div>
             </div>
@@ -148,10 +151,10 @@ export default function MyProfilePage() {
           <div className="md:col-span-2">
             <div className="bg-white rounded-[32px] p-8 border border-gray-100 shadow-xl space-y-8">
               <section>
-                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">Asosiy maʻlumotlar</h3>
+                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">{t('profile.basic_info')}</h3>
                 <div className="grid grid-cols-1 gap-6">
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Toʻliq ism</label>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t('profile.full_name')}</label>
                     <input
                       type="text"
                       disabled={!isEditing}
@@ -161,7 +164,7 @@ export default function MyProfilePage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Telefon raqam</label>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t('profile.phone')}</label>
                     <input
                       type="text"
                       disabled={!isEditing}
@@ -171,43 +174,43 @@ export default function MyProfilePage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Oʻzim haqimda</label>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t('profile.about_me')}</label>
                     <textarea
                       disabled={!isEditing}
                       value={formData.bio}
                       onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                       rows={4}
                       className="w-full px-5 py-3.5 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-60 resize-none"
-                      placeholder="Tajribangiz va mahoratingiz haqida yozing..."
+                      placeholder={t('profile.about_me_placeholder')}
                     />
                   </div>
                 </div>
               </section>
 
               <section className="pt-8 border-t border-gray-50">
-                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">Hudud</h3>
+                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">{t('profile.location')}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Viloyat</label>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t('profile.region')}</label>
                     <select
                       disabled={!isEditing}
                       value={formData.region}
                       onChange={(e) => setFormData({ ...formData, region: e.target.value, district: '' })}
                       className="w-full px-5 py-3.5 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-60"
                     >
-                      {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                      {REGIONS.map(r => <option key={r} value={r}>{t('common.region_name', { defaultValue: r })}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Tuman</label>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t('profile.district')}</label>
                     <select
                       disabled={!isEditing || !formData.region}
                       value={formData.district}
                       onChange={(e) => setFormData({ ...formData, district: e.target.value })}
                       className="w-full px-5 py-3.5 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-60"
                     >
-                      <option value="">Tanlang...</option>
-                      {formData.region && DISTRICTS[formData.region]?.map(d => <option key={d} value={d}>{d}</option>)}
+                      <option value="">{t('common.select')}...</option>
+                      {formData.region && DISTRICTS[formData.region]?.map(d => <option key={d} value={d}>{t(`districts.${getDistrictKey(d)}`)}</option>)}
                     </select>
                   </div>
                 </div>
@@ -215,16 +218,16 @@ export default function MyProfilePage() {
 
               {profile.role === 'worker' && (
                 <section className="pt-8 border-t border-gray-50">
-                  <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">Koʻnikmalar</h3>
+                  <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">{t('profile.skills')}</h3>
                   <div className="flex flex-wrap gap-2">
                     {SKILLS.map(skill => (
                       <button
-                        key={skill}
+                        key={skill.id}
                         disabled={!isEditing}
-                        onClick={() => toggleSkill(skill)}
-                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${formData.skills.includes(skill) ? 'bg-blue-600 text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'} disabled:opacity-60`}
+                        onClick={() => toggleSkill(skill.id)}
+                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${formData.skills.includes(skill.id) ? 'bg-blue-600 text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'} disabled:opacity-60`}
                       >
-                        {skill}
+                        {t(`skills.${skill.id}`)}
                       </button>
                     ))}
                   </div>

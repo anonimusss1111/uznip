@@ -34,9 +34,9 @@ export default function Header() {
   const currentLanguage = languages.find(l => l.code === i18n.language) || languages[0];
 
   const navLinks = [
-    { name: t('nav.jobs'), path: '/jobs', icon: Briefcase },
-    { name: t('nav.workers'), path: '/workers', icon: Users },
-    { name: 'Statistika', path: '/statistics', icon: BarChart2 },
+    { name: t('nav.jobs_link'), path: '/jobs', icon: Briefcase },
+    { name: t('nav.workers_link'), path: '/workers', icon: Users },
+    { name: t('nav.statistics'), path: '/statistics', icon: BarChart2 },
   ];
 
   return (
@@ -55,10 +55,10 @@ export default function Header() {
               </div>
               <div className="flex flex-col">
                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider leading-tight">
-                  Oʻzbekiston Respublikasi
+                  {t('common.branding_top')}
                 </span>
                 <span className="text-[11px] font-bold text-slate-900 leading-tight">
-                  Bandlik va kambagʻallikni qisqartirish tizimi
+                  {t('common.branding_bottom')}
                 </span>
               </div>
             </Link>
@@ -116,7 +116,7 @@ export default function Header() {
             <button
               onClick={toggleTheme}
               className="p-2 rounded-xl bg-secondary text-foreground hover:bg-muted transition-all"
-              title={theme === 'light' ? 'Tungi rejim' : 'Kungi rejim'}
+              title={theme === 'light' ? t('common.dark_mode') : t('common.light_mode')}
             >
               {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
@@ -218,34 +218,34 @@ export default function Header() {
                   <Link
                     to="/chat"
                     onClick={() => setIsMenuOpen(false)}
-                    className="block px-3 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-lg flex items-center space-x-3"
+                    className="block px-3 py-3 text-base font-medium text-foreground hover:bg-secondary rounded-lg flex items-center space-x-3"
                   >
-                    <MessageSquare size={20} className="text-gray-400" />
-                    <span>Xabarlar</span>
+                    <MessageSquare size={20} className="text-muted-foreground" />
+                    <span>{t('nav.chat')}</span>
                   </Link>
                   <Link
-                    to={profile?.role === 'employer' ? '/employer-dashboard' : '/my-profile'}
+                    to={profile?.role === 'employer' ? '/employer/dashboard' : '/my-profile'}
                     onClick={() => setIsMenuOpen(false)}
-                    className="block px-3 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-lg flex items-center space-x-3"
+                    className="block px-3 py-3 text-base font-medium text-foreground hover:bg-secondary rounded-lg flex items-center space-x-3"
                   >
-                    <User size={20} className="text-gray-400" />
-                    <span>Profilim</span>
+                    <User size={20} className="text-muted-foreground" />
+                    <span>{t('nav.profile')}</span>
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left px-3 py-3 text-base font-medium text-red-600 hover:bg-red-50 rounded-lg flex items-center space-x-3"
+                    className="w-full text-left px-3 py-3 text-base font-medium text-destructive hover:bg-destructive/10 rounded-lg flex items-center space-x-3"
                   >
                     <LogOut size={20} />
-                    <span>Chiqish</span>
+                    <span>{t('nav.logout')}</span>
                   </button>
                 </>
               ) : (
                 <Link
                   to="/auth"
                   onClick={() => setIsMenuOpen(false)}
-                  className="block w-full text-center bg-blue-600 text-white px-5 py-3 rounded-xl font-semibold mt-4"
+                  className="block w-full text-center bg-primary text-primary-foreground px-5 py-3 rounded-xl font-semibold mt-4"
                 >
-                  Kirish
+                  {t('nav.login')}
                 </Link>
               )}
             </div>

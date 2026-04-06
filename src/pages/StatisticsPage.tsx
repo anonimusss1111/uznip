@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { db } from '../firebase';
 import { collection, onSnapshot, query, orderBy, where } from 'firebase/firestore';
 import { EmploymentStat } from '../types';
@@ -7,7 +8,10 @@ import { TrendingUp, Users, MapPin, BarChart2, PieChart } from 'lucide-react';
 import Layout from '../components/Layout';
 import { DISTRICTS } from '../constants/locations';
 
+import { getDistrictKey } from '../lib/utils';
+
 export default function StatisticsPage() {
+  const { t } = useTranslation();
   const [stats, setStats] = React.useState<EmploymentStat[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -35,9 +39,9 @@ export default function StatisticsPage() {
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-16">
-          <h1 className="text-4xl font-black text-gray-900 mb-4 tracking-tight">Bandlik statistikasi</h1>
-          <p className="text-gray-500 max-w-2xl mx-auto">
-            Platformamiz orqali ish bilan taʻminlangan fuqarolar haqidagi real vaqt rejimidagi maʻlumotlar.
+          <h1 className="text-4xl font-black text-foreground mb-4 tracking-tight">{t('stats.title')}</h1>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            {t('stats.subtitle')}
           </p>
         </div>
 
@@ -46,41 +50,41 @@ export default function StatisticsPage() {
             <div className="w-16 h-16 bg-blue-50 rounded-3xl flex items-center justify-center text-blue-600 mx-auto mb-6">
               <Users size={32} />
             </div>
-            <div className="text-4xl font-black text-gray-900 mb-2">{totalEmployed.toLocaleString()}</div>
-            <div className="text-sm font-bold text-gray-400 uppercase tracking-widest">Jami ish bilan taʻminlanganlar</div>
+            <div className="text-4xl font-black text-foreground mb-2">{totalEmployed.toLocaleString()}</div>
+            <div className="text-sm font-bold text-muted-foreground uppercase tracking-widest">{t('stats.total_employed')}</div>
           </div>
-          <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-xl text-center">
-            <div className="w-16 h-16 bg-green-50 rounded-3xl flex items-center justify-center text-green-600 mx-auto mb-6">
+          <div className="bg-card p-8 rounded-[40px] border border-border shadow-xl text-center">
+            <div className="w-16 h-16 bg-green-500/10 rounded-3xl flex items-center justify-center text-green-600 mx-auto mb-6">
               <TrendingUp size={32} />
             </div>
-            <div className="text-4xl font-black text-gray-900 mb-2">85%</div>
-            <div className="text-sm font-bold text-gray-400 uppercase tracking-widest">Oylik oʻsish</div>
+            <div className="text-4xl font-black text-foreground mb-2">85%</div>
+            <div className="text-sm font-bold text-muted-foreground uppercase tracking-widest">{t('stats.monthly_growth')}</div>
           </div>
-          <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-xl text-center">
-            <div className="w-16 h-16 bg-purple-50 rounded-3xl flex items-center justify-center text-purple-600 mx-auto mb-6">
+          <div className="bg-card p-8 rounded-[40px] border border-border shadow-xl text-center">
+            <div className="w-16 h-16 bg-purple-500/10 rounded-3xl flex items-center justify-center text-purple-600 mx-auto mb-6">
               <MapPin size={32} />
             </div>
-            <div className="text-4xl font-black text-gray-900 mb-2">{DISTRICTS["Samarqand viloyati"].length}</div>
-            <div className="text-sm font-bold text-gray-400 uppercase tracking-widest">Qamrab olingan tumanlar</div>
+            <div className="text-4xl font-black text-foreground mb-2">{DISTRICTS["Samarqand viloyati"].length}</div>
+            <div className="text-sm font-bold text-muted-foreground uppercase tracking-widest">{t('stats.covered_districts')}</div>
           </div>
         </div>
 
-        <div className="bg-white rounded-[40px] border border-gray-100 shadow-2xl overflow-hidden">
-          <div className="px-8 py-6 border-b border-gray-50 flex items-center justify-between">
-            <h3 className="text-xl font-black text-gray-900 tracking-tight flex items-center">
-              <BarChart2 size={24} className="mr-2 text-blue-600" /> Tumanlar kesimida
+        <div className="bg-card rounded-[40px] border border-border shadow-2xl overflow-hidden">
+          <div className="px-8 py-6 border-b border-border flex items-center justify-between">
+            <h3 className="text-xl font-black text-foreground tracking-tight flex items-center">
+              <BarChart2 size={24} className="mr-2 text-blue-600" /> {t('stats.by_district')}
             </h3>
-            <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">Hududiy koʻrsatkichlar</div>
+            <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{t('stats.regional_indicators')}</div>
           </div>
           <div className="p-8">
             <div className="space-y-6">
               {displayStats.map((stat, idx) => (
                 <div key={stat.id}>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="font-bold text-gray-700">{stat.region}</span>
-                    <span className="text-sm font-black text-blue-600">{stat.count} kishi</span>
+                    <span className="font-bold text-foreground/80">{t(`districts.${getDistrictKey(stat.region)}`, { defaultValue: stat.region })}</span>
+                    <span className="text-sm font-black text-blue-600">{t('stats.people_count', { count: stat.count })}</span>
                   </div>
-                  <div className="w-full bg-gray-100 h-3 rounded-full overflow-hidden">
+                  <div className="w-full bg-secondary h-3 rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${(stat.count / displayStats[0].count) * 100}%` }}

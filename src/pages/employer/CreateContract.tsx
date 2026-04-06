@@ -17,7 +17,10 @@ import {
   CheckCircle
 } from 'lucide-react';
 
+import { useTranslation } from 'react-i18next';
+
 export default function CreateContract() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const appId = searchParams.get('appId');
   const { profile } = useAuth();
@@ -92,15 +95,15 @@ export default function CreateContract() {
     }
   };
 
-  if (loading) return <DashboardLayout><div className="p-8 animate-pulse">Yuklanmoqda...</div></DashboardLayout>;
-  if (!application || !job || !worker) return <DashboardLayout><div className="p-8">Maʻlumot topilmadi.</div></DashboardLayout>;
+  if (loading) return <DashboardLayout><div className="p-8 animate-pulse">{t('common.loading')}...</div></DashboardLayout>;
+  if (!application || !job || !worker) return <DashboardLayout><div className="p-8">{t('profile.not_found')}</div></DashboardLayout>;
 
   return (
     <DashboardLayout>
       <div className="max-w-4xl mx-auto space-y-8">
         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground hover:text-foreground font-bold transition-colors">
           <ChevronLeft size={20} />
-          Orqaga qaytish
+          {t('common.back')}
         </button>
 
         <div className="flex items-center gap-4">
@@ -108,8 +111,8 @@ export default function CreateContract() {
             <FileText size={32} />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-foreground tracking-tight">Yangi shartnoma tuzish</h1>
-            <p className="text-muted-foreground">Ishchi va ish beruvchi oʻrtasidagi rasmiy kelishuv.</p>
+            <h1 className="text-3xl font-black text-foreground tracking-tight">{t('contracts.create_title')}</h1>
+            <p className="text-muted-foreground">{t('contracts.create_subtitle')}</p>
           </div>
         </div>
 
@@ -118,7 +121,7 @@ export default function CreateContract() {
             <form onSubmit={handleSubmit} className="bg-card rounded-[40px] border border-border p-8 shadow-sm space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-muted-foreground uppercase tracking-widest ml-1">Ish haqi (UZS)</label>
+                  <label className="text-sm font-bold text-muted-foreground uppercase tracking-widest ml-1">{t('employer_dashboard.offered_price')} ({t('common.uzs')})</label>
                   <div className="relative">
                     <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
                     <input
@@ -131,7 +134,7 @@ export default function CreateContract() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-muted-foreground uppercase tracking-widest ml-1">Boshlanish sanasi</label>
+                  <label className="text-sm font-bold text-muted-foreground uppercase tracking-widest ml-1">{t('contracts.start_date')}</label>
                   <div className="relative">
                     <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
                     <input
@@ -144,7 +147,7 @@ export default function CreateContract() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-muted-foreground uppercase tracking-widest ml-1">Tugash sanasi</label>
+                  <label className="text-sm font-bold text-muted-foreground uppercase tracking-widest ml-1">{t('contracts.end_date')}</label>
                   <div className="relative">
                     <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
                     <input
@@ -159,11 +162,11 @@ export default function CreateContract() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-muted-foreground uppercase tracking-widest ml-1">Qoʻshimcha shartlar</label>
+                <label className="text-sm font-bold text-muted-foreground uppercase tracking-widest ml-1">{t('contracts.terms')}</label>
                 <textarea
                   rows={6}
                   required
-                  placeholder="Ish tartibi, toʻlov shartlari va boshqa talablar..."
+                  placeholder={t('contracts.terms_placeholder')}
                   value={formData.terms}
                   onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
                   className="w-full px-4 py-4 bg-secondary/30 border border-border rounded-2xl focus:ring-2 focus:ring-primary outline-none font-medium leading-relaxed"
@@ -173,7 +176,7 @@ export default function CreateContract() {
               <div className="bg-amber-50 border border-amber-100 p-6 rounded-3xl flex gap-4">
                 <AlertCircle className="text-amber-600 shrink-0" size={24} />
                 <p className="text-sm text-amber-800 leading-relaxed">
-                  Shartnoma tuzilgandan soʻng, u ishchiga tasdiqlash uchun yuboriladi. Ishchi tasdiqlagandan keyin shartnoma kuchga kiradi.
+                  {t('contracts.warning_desc')}
                 </p>
               </div>
 
@@ -182,10 +185,10 @@ export default function CreateContract() {
                 disabled={submitting}
                 className="w-full py-5 bg-primary text-primary-foreground rounded-[24px] font-black text-lg shadow-xl shadow-primary/20 hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-3"
               >
-                {submitting ? 'Yuborilmoqda...' : (
+                {submitting ? t('common.saving') : (
                   <>
                     <CheckCircle size={24} />
-                    Shartnomani tasdiqlash va yuborish
+                    {t('contracts.confirm_and_send')}
                   </>
                 )}
               </button>
@@ -194,14 +197,14 @@ export default function CreateContract() {
 
           <div className="space-y-6">
             <div className="bg-card rounded-[32px] border border-border p-6 shadow-sm space-y-6">
-              <h3 className="font-bold text-foreground uppercase tracking-widest text-xs text-muted-foreground">Tomonlar</h3>
+              <h3 className="font-bold text-foreground uppercase tracking-widest text-xs text-muted-foreground">{t('contracts.parties')}</h3>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
                     <Briefcase size={20} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Ish beruvchi</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t('common.employer')}</p>
                     <p className="text-sm font-bold">{profile.fullName}</p>
                   </div>
                 </div>
@@ -210,7 +213,7 @@ export default function CreateContract() {
                     <User size={20} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Ishchi</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t('common.worker')}</p>
                     <p className="text-sm font-bold">{worker.fullName}</p>
                   </div>
                 </div>
@@ -218,11 +221,11 @@ export default function CreateContract() {
             </div>
 
             <div className="bg-card rounded-[32px] border border-border p-6 shadow-sm space-y-4">
-              <h3 className="font-bold text-foreground uppercase tracking-widest text-xs text-muted-foreground">Ish maʻlumotlari</h3>
+              <h3 className="font-bold text-foreground uppercase tracking-widest text-xs text-muted-foreground">{t('contracts.job_info')}</h3>
               <p className="text-sm font-bold text-foreground">{job.title}</p>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <DollarSign size={14} />
-                Taklif etilgan narx: {job.price.toLocaleString()} UZS
+                {t('employer_dashboard.offered_price')}: {job.price.toLocaleString()} {t('common.uzs')}
               </div>
             </div>
           </div>

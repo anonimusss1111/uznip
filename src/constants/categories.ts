@@ -11,5 +11,15 @@ export const CATEGORIES = [
 ];
 
 export const SKILLS = [
-  "Uy tozalash", "Ovqat pishirish", "Tikuvchilik", "Bolalarga qarash", "Ingliz tili", "Rus tili", "Matematika", "Makiyaj", "Manikyur", "Toʻqish", "Kandolatpazlik"
+  { id: "house_cleaning", name: "Uy tozalash" },
+  { id: "cooking", name: "Ovqat pishirish" },
+  { id: "sewing", name: "Tikuvchilik" },
+  { id: "babysitting", name: "Bolalarga qarash" },
+  { id: "english", name: "Ingliz tili" },
+  { id: "russian", name: "Rus tili" },
+  { id: "math", name: "Matematika" },
+  { id: "makeup", name: "Makiyaj" },
+  { id: "manicure", name: "Manikyur" },
+  { id: "knitting", name: "Toʻqish" },
+  { id: "confectionery", name: "Kandolatpazlik" }
 ];

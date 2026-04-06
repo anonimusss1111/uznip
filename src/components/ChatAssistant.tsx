@@ -18,6 +18,8 @@ import {
 import { GoogleGenAI } from "@google/genai";
 import { useAuth } from '../hooks/useAuth';
 import ReactMarkdown from 'react-markdown';
+import { useTranslation } from 'react-i18next';
+import { Shield, Info } from 'lucide-react';
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -27,6 +29,7 @@ interface Message {
 }
 
 export default function ChatAssistant() {
+  const { t, i18n } = useTranslation();
   const { profile } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -34,7 +37,7 @@ export default function ChatAssistant() {
   const [messages, setMessages] = useState<Message[]>([
     { 
       role: 'assistant', 
-      content: `Assalomu alaykum, ${profile?.fullName || 'foydalanuvchi'}! Men QULAY ISH platformasining AI yordamchisiman. Sizga qanday yordam bera olaman?` 
+      content: t('chat.ai_welcome', { name: profile?.fullName || t('common.unknown') })
     }
   ]);
   const [loading, setLoading] = useState(false);
@@ -58,18 +61,18 @@ export default function ChatAssistant() {
     try {
       const model = "gemini-3-flash-preview";
       const systemInstruction = `
-        Sen "QULAY ISH" platformasining aqlli yordamchisisan. 
-        Platforma O'zbekistonda ish qidiruvchilar va ish beruvchilarni birlashtiradi.
-        Foydalanuvchi roli: ${profile?.role || 'mehmon'}.
-        Ismi: ${profile?.fullName || "Noma'lum"}.
+        You are an AI assistant for the "QULAY ISH" (Convenient Work) platform in Uzbekistan.
+        The platform connects workers (mostly women in Samarkand) with employers.
+        Current language: ${i18n.language}. Please respond in this language.
         
-        Sening vazifalaring:
-        1. Platformadan qanday foydalanishni tushuntirish.
-        2. Ish qidirish yoki ish joylashtirish bo'yicha maslahatlar berish.
-        3. Shartnomalar va nizolarni hal qilish bo'yicha umumiy ma'lumot berish.
-        4. O'zbek tilida, muloyim va professional tarzda muloqot qilish.
+        Key features:
+        - Job search (filtering by district in Samarkand)
+        - Worker profiles and skills
+        - Digital contracts and secure payments
+        - Dispute resolution by admins
         
-        Juda qisqa va aniq javob ber. Markdown formatidan foydalan.
+        Your tone should be professional, helpful, and encouraging.
+        Keep responses concise and relevant to the platform.
       `;
 
       const response = await genAI.models.generateContent({
@@ -84,21 +87,21 @@ export default function ChatAssistant() {
         }
       });
 
-      const assistantMessage = response.text || "Kechirasiz, hozircha javob bera olmayman.";
+      const assistantMessage = response.text || t('chat.ai_no_response');
       setMessages(prev => [...prev, { role: 'assistant', content: assistantMessage }]);
     } catch (error) {
       console.error('AI Error:', error);
-      setMessages(prev => [...prev, { role: 'assistant', content: "Kechirasiz, texnik xatolik yuz berdi. Iltimos, keyinroq urinib ko'ring." }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: t('chat.ai_error') }]);
     } finally {
       setLoading(false);
     }
   };
 
   const suggestions = [
-    { icon: Search, label: "Ish qanday qidiriladi?", prompt: "Platformada qanday qilib ish qidirish mumkin?" },
-    { icon: Briefcase, label: "Ish joylashtirish", prompt: "Ish beruvchi sifatida qanday ish joylashtiraman?" },
-    { icon: FileText, label: "Shartnoma tuzish", prompt: "Shartnoma tuzish jarayoni qanday bo'ladi?" },
-    { icon: HelpCircle, label: "Nizolar", prompt: "Nizo yuzaga kelsa nima qilish kerak?" },
+    { icon: Search, label: t('chat.ai_label_jobs'), prompt: t('chat.ai_prompt_jobs') },
+    { icon: Briefcase, label: t('chat.ai_label_post'), prompt: t('chat.ai_prompt_post') },
+    { icon: FileText, label: t('chat.ai_label_contract'), prompt: t('chat.ai_prompt_contract') },
+    { icon: HelpCircle, label: t('chat.ai_label_dispute'), prompt: t('chat.ai_prompt_dispute') },
   ];
 
   return (
@@ -136,8 +139,8 @@ export default function ChatAssistant() {
                   <Bot size={24} />
                 </div>
                 <div>
-                  <h3 className="font-black tracking-tight">AI Yordamchi</h3>
-                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Onlayn • Qulay Ish</p>
+                  <h3 className="font-black tracking-tight">{t('chat.ai_assistant')}</h3>
+                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">{t('chat.ai_online')}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -220,7 +223,7 @@ export default function ChatAssistant() {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Xabaringizni yozing..."
+                  placeholder={t('chat.placeholder')}
                   className="w-full pl-5 pr-14 py-4 bg-secondary/30 border border-border rounded-2xl focus:ring-2 focus:ring-primary outline-none font-medium"
                 />
                 <button
@@ -232,7 +235,7 @@ export default function ChatAssistant() {
                 </button>
               </div>
               <p className="text-[10px] text-center text-muted-foreground mt-3 font-bold uppercase tracking-widest opacity-50">
-                AI xato qilishi mumkin. Muhim ma'lumotlarni tekshiring.
+                {t('chat.ai_disclaimer')}
               </p>
             </form>
           </motion.div>

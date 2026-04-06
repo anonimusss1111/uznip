@@ -10,8 +10,13 @@ import { uz } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 
+import { useTranslation } from 'react-i18next';
+import { ru, enUS } from 'date-fns/locale';
+import { getDistrictKey } from '../../lib/utils';
+
 export default function EmployerDashboard() {
-  const { profile } = useAuth();
+  const { profile, isDemo } = useAuth();
+  const { t, i18n } = useTranslation();
   const [stats, setStats] = useState({
     activeJobs: 0,
     totalApplicants: 0,
@@ -24,6 +29,22 @@ export default function EmployerDashboard() {
 
   useEffect(() => {
     if (!profile?.uid) return;
+
+    if (isDemo) {
+      // Load demo data
+      const customDemoJobs = JSON.parse(sessionStorage.getItem('custom_demo_jobs') || '[]');
+      const employerDemoJobs = customDemoJobs.filter((j: Job) => j.employerId === profile.uid);
+      setMyJobs(employerDemoJobs.slice(0, 5));
+      setStats({
+        activeJobs: employerDemoJobs.filter((j: Job) => j.status === 'open').length,
+        totalApplicants: 0,
+        activeContracts: 0,
+        totalSpent: 0
+      });
+      setRecentApplicants([]);
+      setLoading(false);
+      return;
+    }
 
     const jobsQuery = query(collection(db, 'jobs'), where('employerId', '==', profile.uid));
     const unsubscribeJobs = onSnapshot(jobsQuery, (snapshot) => {
@@ -95,11 +116,19 @@ export default function EmployerDashboard() {
     };
   }, [profile]);
 
+  const getDateLocale = () => {
+    switch (i18n.language) {
+      case 'ru': return ru;
+      case 'en': return enUS;
+      default: return uz;
+    }
+  };
+
   const statCards = [
-    { label: 'Faol eʼlonlar', value: stats.activeJobs, icon: Briefcase, color: 'bg-blue-600', shadow: 'shadow-blue-600/20' },
-    { label: 'Jami nomzodlar', value: stats.totalApplicants, icon: Users, color: 'bg-emerald-600', shadow: 'shadow-emerald-600/20' },
-    { label: 'Faol shartnomalar', value: stats.activeContracts, icon: CheckCircle, color: 'bg-indigo-600', shadow: 'shadow-indigo-600/20' },
-    { label: 'Jami xarajat', value: `${stats.totalSpent.toLocaleString()} UZS`, icon: TrendingUp, color: 'bg-amber-600', shadow: 'shadow-amber-600/20' },
+    { label: t('employer.dashboard.active_jobs'), value: stats.activeJobs, icon: Briefcase, color: 'bg-blue-600', shadow: 'shadow-blue-600/20' },
+    { label: t('employer.dashboard.total_applicants'), value: stats.totalApplicants, icon: Users, color: 'bg-emerald-600', shadow: 'shadow-emerald-600/20' },
+    { label: t('employer.dashboard.active_contracts'), value: stats.activeContracts, icon: CheckCircle, color: 'bg-indigo-600', shadow: 'shadow-indigo-600/20' },
+    { label: t('employer.dashboard.total_spent'), value: `${stats.totalSpent.toLocaleString()} ${t('common.uzs')}`, icon: TrendingUp, color: 'bg-amber-600', shadow: 'shadow-amber-600/20' },
   ];
 
   return (
@@ -108,15 +137,15 @@ export default function EmployerDashboard() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <h2 className="text-4xl font-black text-slate-900 tracking-tight">Ish beruvchi paneli</h2>
-            <p className="text-slate-500 mt-2 font-medium">Eʼlonlaringizni boshqaring va eng yaxshi mutaxassislarni toping.</p>
+            <h2 className="text-4xl font-black text-slate-900 tracking-tight">{t('employer.dashboard.welcome', { name: profile?.fullName?.split(' ')[0] || '' })}</h2>
+            <p className="text-slate-500 mt-2 font-medium">{t('employer.dashboard.subtitle')}</p>
           </div>
           <Link
             to="/employer/create-job"
             className="flex items-center justify-center gap-3 px-8 py-4 bg-blue-600 text-white rounded-[24px] font-black uppercase tracking-widest shadow-2xl shadow-blue-600/30 hover:scale-105 transition-all duration-300 group"
           >
             <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-            Yangi eʼlon berish
+            {t('employer.dashboard.post_job')}
           </Link>
         </div>
 
@@ -149,9 +178,9 @@ export default function EmployerDashboard() {
             <div className="flex items-center justify-between px-2">
               <h3 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
                 <div className="w-2 h-8 bg-blue-600 rounded-full" />
-                Mening eʼlonlarim
+                {t('employer.dashboard.my_jobs')}
               </h3>
-              <Link to="/employer/jobs" className="text-xs font-black text-blue-600 uppercase tracking-widest hover:text-blue-700 transition-colors">Barchasini koʻrish</Link>
+              <Link to="/employer/jobs" className="text-xs font-black text-blue-600 uppercase tracking-widest hover:text-blue-700 transition-colors">{t('employer.dashboard.view_all')}</Link>
             </div>
 
             <div className="space-y-4">
@@ -172,18 +201,18 @@ export default function EmployerDashboard() {
                       <div>
                         <h4 className="font-black text-slate-900 group-hover:text-blue-600 transition-colors text-lg">{job.title}</h4>
                         <div className="flex items-center gap-4 mt-1.5 text-xs font-bold text-slate-400">
-                          <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-blue-400" /> {job.district}</span>
-                          <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {format(job.createdAt?.toDate?.() || new Date(), 'd MMM', { locale: uz })}</span>
+                          <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-blue-400" /> {t(`districts.${getDistrictKey(job.district)}`)}</span>
+                          <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {format(job.createdAt?.toDate?.() || new Date(), 'd MMM', { locale: getDateLocale() })}</span>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center justify-between sm:justify-end gap-8 pt-4 sm:pt-0 border-t sm:border-t-0 border-slate-50">
                       <div className="text-right">
-                        <p className="text-lg font-black text-blue-600 tracking-tight">{job.price.toLocaleString()} UZS</p>
+                        <p className="text-lg font-black text-blue-600 tracking-tight">{job.price.toLocaleString()} {t('common.uzs')}</p>
                         <span className={`inline-block px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest mt-1 ${
                           job.status === 'open' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-500 border border-slate-200'
                         }`}>
-                          {job.status === 'open' ? 'Faol' : 'Yopiq'}
+                          {job.status === 'open' ? t('employer.dashboard.active') : t('employer.dashboard.closed')}
                         </span>
                       </div>
                       <Link to={`/employer/jobs/${job.id}`} className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
@@ -197,9 +226,9 @@ export default function EmployerDashboard() {
                   <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-200">
                     <Briefcase size={40} />
                   </div>
-                  <p className="text-slate-500 font-bold text-lg mb-8 tracking-tight">Sizda hali hech qanday eʼlon yoʻq.</p>
+                  <p className="text-slate-500 font-bold text-lg mb-8 tracking-tight">{t('employer.dashboard.no_jobs')}</p>
                   <Link to="/employer/create-job" className="inline-flex items-center gap-2 px-8 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-blue-600/20">
-                    Birinchi eʼlonni joylash
+                    {t('employer.dashboard.post_first')}
                   </Link>
                 </div>
               )}
@@ -210,12 +239,12 @@ export default function EmployerDashboard() {
           <div className="space-y-6">
             <h3 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3 px-2">
               <div className="w-2 h-8 bg-emerald-500 rounded-full" />
-              Yangi nomzodlar
+              {t('employer.dashboard.new_applicants')}
             </h3>
 
             <div className="bg-white rounded-[40px] border border-slate-100 overflow-hidden shadow-sm">
               {loading ? (
-                <div className="p-12 text-center animate-pulse text-slate-400 font-bold">Yuklanmoqda...</div>
+                <div className="p-12 text-center animate-pulse text-slate-400 font-bold">{t('employer.dashboard.loading')}</div>
               ) : recentApplicants.length > 0 ? (
                 <div className="divide-y divide-slate-50">
                   {recentApplicants.map((app) => (
@@ -228,8 +257,8 @@ export default function EmployerDashboard() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-black text-slate-900 truncate group-hover:text-emerald-600 transition-colors">{app.worker?.fullName || 'Nomaʼlum'}</p>
-                        <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-wider mt-0.5">ID: {app.jobId.slice(-6)} boʻyicha</p>
+                        <p className="text-sm font-black text-slate-900 truncate group-hover:text-emerald-600 transition-colors">{app.worker?.fullName || t('common.unknown')}</p>
+                        <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-wider mt-0.5">{t('employer.dashboard.on_job_id', { id: app.jobId.slice(-6) })}</p>
                       </div>
                       <Link to={`/chat?with=${app.workerId}&jobId=${app.jobId}`} className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-emerald-500 hover:text-white transition-all shadow-sm">
                         <MessageSquare className="w-5 h-5" />
@@ -239,31 +268,31 @@ export default function EmployerDashboard() {
                 </div>
               ) : (
                 <div className="p-16 text-center">
-                  <p className="text-sm text-slate-400 font-bold">Hozircha arizalar yoʻq.</p>
+                  <p className="text-sm text-slate-400 font-bold">{t('employer.dashboard.no_applicants')}</p>
                 </div>
               )}
               <div className="p-6 bg-slate-50/50 border-t border-slate-50">
                 <Link to="/employer/applicants" className="text-xs font-black text-emerald-600 uppercase tracking-widest hover:text-emerald-700 block text-center">
-                  Barcha nomzodlarni koʻrish
+                  {t('employer.dashboard.view_all_applicants')}
                 </Link>
               </div>
             </div>
 
             {/* Quick Actions */}
             <div className="bg-slate-900 rounded-[40px] p-8 border border-slate-800 shadow-2xl space-y-6">
-              <h4 className="font-black text-white uppercase tracking-widest text-xs">Tezkor havolalar</h4>
+              <h4 className="font-black text-white uppercase tracking-widest text-xs">{t('employer.dashboard.quick_actions')}</h4>
               <div className="space-y-3">
                 <Link to="/workers" className="flex items-center justify-between p-4 bg-slate-800/50 rounded-2xl border border-slate-700/50 hover:border-blue-500 transition-all group">
                   <div className="flex items-center gap-3">
                     <Users className="w-5 h-5 text-blue-400" />
-                    <span className="text-xs font-black text-white uppercase tracking-wider">Ishchilar bazasi</span>
+                    <span className="text-xs font-black text-white uppercase tracking-wider">{t('employer.dashboard.worker_base')}</span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors" />
                 </Link>
                 <Link to="/employer/contracts" className="flex items-center justify-between p-4 bg-slate-800/50 rounded-2xl border border-slate-700/50 hover:border-emerald-500 transition-all group">
                   <div className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-emerald-400" />
-                    <span className="text-xs font-black text-white uppercase tracking-wider">Shartnomalar</span>
+                    <span className="text-xs font-black text-white uppercase tracking-wider">{t('employer.dashboard.contracts')}</span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors" />
                 </Link>

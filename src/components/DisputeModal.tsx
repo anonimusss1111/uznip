@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { AlertTriangle, X, Send, ShieldAlert } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
+import { useTranslation } from 'react-i18next';
 
 interface DisputeModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface DisputeModalProps {
 }
 
 export default function DisputeModal({ isOpen, onClose, contractId, openedById }: DisputeModalProps) {
+  const { t } = useTranslation();
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -69,7 +71,7 @@ export default function DisputeModal({ isOpen, onClose, contractId, openedById }
                   <div className="p-3 bg-destructive/10 rounded-2xl">
                     <ShieldAlert size={24} />
                   </div>
-                  <h3 className="text-2xl font-black tracking-tight">Nizoni ochish</h3>
+                  <h3 className="text-2xl font-black tracking-tight">{t('dispute.title')}</h3>
                 </div>
                 <button onClick={onClose} className="p-2 hover:bg-secondary rounded-full transition-colors">
                   <X size={24} />
@@ -81,26 +83,26 @@ export default function DisputeModal({ isOpen, onClose, contractId, openedById }
                   <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
                     <Send size={40} />
                   </div>
-                  <h4 className="text-xl font-bold text-foreground">Nizo yuborildi</h4>
-                  <p className="text-muted-foreground">Adminlarimiz tez orada vaziyatni koʻrib chiqishadi.</p>
+                  <h4 className="text-xl font-bold text-foreground">{t('dispute.success_title')}</h4>
+                  <p className="text-muted-foreground">{t('dispute.success_desc')}</p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="bg-amber-50 border border-amber-100 p-6 rounded-3xl flex gap-4">
                     <AlertTriangle className="text-amber-600 shrink-0" size={24} />
                     <p className="text-sm text-amber-800 leading-relaxed font-medium">
-                      Nizo ochilgandan soʻng, shartnoma toʻxtatiladi va adminlar chat hamda shartnoma shartlarini oʻrganishadi.
+                      {t('dispute.hint')}
                     </p>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted-foreground uppercase tracking-widest ml-1">Nizo sababi</label>
+                    <label className="text-sm font-bold text-muted-foreground uppercase tracking-widest ml-1">{t('dispute.reason_label')}</label>
                     <textarea
                       required
                       rows={5}
                       value={reason}
                       onChange={(e) => setReason(e.target.value)}
-                      placeholder="Nima uchun nizo ochayotganingizni batafsil tushuntiring..."
+                      placeholder={t('dispute.reason_placeholder')}
                       className="w-full px-5 py-4 bg-secondary/30 border border-border rounded-2xl focus:ring-2 focus:ring-destructive outline-none font-medium leading-relaxed"
                     ></textarea>
                   </div>
@@ -110,10 +112,10 @@ export default function DisputeModal({ isOpen, onClose, contractId, openedById }
                     disabled={loading}
                     className="w-full py-5 bg-destructive text-destructive-foreground rounded-[24px] font-black text-lg shadow-xl shadow-destructive/20 hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-3"
                   >
-                    {loading ? 'Yuborilmoqda...' : (
+                    {loading ? t('common.sending') : (
                       <>
                         <Send size={24} />
-                        Nizoni yuborish
+                        {t('dispute.submit')}
                       </>
                     )}
                   </button>

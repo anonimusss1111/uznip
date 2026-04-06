@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../firebase';
@@ -19,9 +20,10 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
-import { uz } from 'date-fns/locale';
+import { uz, ru, enUS } from 'date-fns/locale';
 
 export default function NotificationsPage() {
+  const { t, i18n } = useTranslation();
   const { profile } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,13 +82,21 @@ export default function NotificationsPage() {
     }
   };
 
+  const getDateLocale = () => {
+    switch (i18n.language) {
+      case 'ru': return ru;
+      case 'en': return enUS;
+      default: return uz;
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold text-foreground tracking-tight">Bildirishnomalar</h2>
-            <p className="text-muted-foreground mt-2">Sizga kelgan barcha yangiliklar va xabarlar.</p>
+            <h2 className="text-3xl font-bold text-foreground tracking-tight">{t('notifications.title')}</h2>
+            <p className="text-muted-foreground mt-2">{t('notifications.subtitle')}</p>
           </div>
           {notifications.some(n => !n.read) && (
             <button
@@ -94,7 +104,7 @@ export default function NotificationsPage() {
               className="flex items-center gap-2 px-6 py-3 bg-secondary text-foreground rounded-2xl font-bold hover:bg-border transition-all"
             >
               <Check size={20} />
-              Hammasini oʻqilgan deb belgilash
+              {t('notifications.mark_all_read')}
             </button>
           )}
         </div>
@@ -132,7 +142,7 @@ export default function NotificationsPage() {
                           {notification.title}
                         </h4>
                         <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                          {format(notification.createdAt?.toDate?.() || new Date(), 'd MMM, HH:mm', { locale: uz })}
+                          {format(notification.createdAt?.toDate?.() || new Date(), 'd MMM, HH:mm', { locale: getDateLocale() })}
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground leading-relaxed">
@@ -145,7 +155,7 @@ export default function NotificationsPage() {
                           onClick={() => markAsRead(notification.id)}
                           className="inline-flex items-center gap-1 mt-4 text-sm font-bold text-primary hover:underline group-hover:translate-x-1 transition-transform"
                         >
-                          Batafsil koʻrish
+                          {t('notifications.view_details')}
                           <ChevronRight size={16} />
                         </Link>
                       )}
@@ -156,7 +166,7 @@ export default function NotificationsPage() {
                         <button
                           onClick={() => markAsRead(notification.id)}
                           className="p-2 bg-secondary text-foreground rounded-xl hover:bg-border transition-colors"
-                          title="Oʻqilgan deb belgilash"
+                          title={t('notifications.mark_read')}
                         >
                           <Check size={18} />
                         </button>
@@ -164,7 +174,7 @@ export default function NotificationsPage() {
                       <button
                         onClick={() => deleteNotification(notification.id)}
                         className="p-2 bg-destructive/10 text-destructive rounded-xl hover:bg-destructive/20 transition-colors"
-                        title="Oʻchirish"
+                        title={t('notifications.delete')}
                       >
                         <Trash2 size={18} />
                       </button>
@@ -179,8 +189,8 @@ export default function NotificationsPage() {
             <div className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mx-auto mb-6">
               <Bell size={40} className="text-muted-foreground" />
             </div>
-            <h3 className="text-2xl font-bold text-foreground">Bildirishnomalar yoʻq</h3>
-            <p className="text-muted-foreground mt-2">Hozircha sizda hech qanday yangi bildirishnoma mavjud emas.</p>
+            <h3 className="text-2xl font-bold text-foreground">{t('notifications.no_notifications')}</h3>
+            <p className="text-muted-foreground mt-2">{t('notifications.no_notifications_desc')}</p>
           </div>
         )}
       </div>

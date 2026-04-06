@@ -26,6 +26,8 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { motion } from 'motion/react';
 
+import { useTranslation } from 'react-i18next';
+
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -33,52 +35,53 @@ function cn(...inputs: ClassValue[]) {
 export default function Sidebar() {
   const { profile, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { t } = useTranslation();
 
   const menuItems = {
     worker: [
-      { icon: LayoutDashboard, label: 'Boshqaruv paneli', path: '/worker/dashboard' },
-      { icon: MapPin, label: 'Yaqindagi ishlar', path: '/jobs?near=true' },
-      { icon: Briefcase, label: 'Barcha ishlar', path: '/jobs' },
-      { icon: FileText, label: 'Xizmatlarim', path: '/worker/service-posts' },
-      { icon: FileText, label: 'Arizalarim', path: '/worker/applications' },
-      { icon: CheckCircle, label: 'Shartnomalar', path: '/worker/contracts' },
-      { icon: MessageSquare, label: 'Xabarlar', path: '/chat' },
-      { icon: User, label: 'Profilim', path: '/my-profile' },
-      { icon: Bell, label: 'Bildirishnomalar', path: '/notifications' },
+      { icon: LayoutDashboard, label: t('sidebar.dashboard'), path: '/worker/dashboard' },
+      { icon: MapPin, label: t('sidebar.nearby_jobs'), path: '/jobs?near=true' },
+      { icon: Briefcase, label: t('sidebar.all_jobs'), path: '/jobs' },
+      { icon: FileText, label: t('sidebar.my_services'), path: '/worker/service-posts' },
+      { icon: FileText, label: t('sidebar.my_applications'), path: '/worker/applications' },
+      { icon: CheckCircle, label: t('sidebar.contracts'), path: '/worker/contracts' },
+      { icon: MessageSquare, label: t('sidebar.messages'), path: '/chat' },
+      { icon: User, label: t('sidebar.profile'), path: '/my-profile' },
+      { icon: Bell, label: t('sidebar.notifications'), path: '/notifications' },
     ],
     employer: [
-      { icon: LayoutDashboard, label: 'Boshqaruv paneli', path: '/employer/dashboard' },
-      { icon: Briefcase, label: 'Ish eʼlon qilish', path: '/employer/create-job' },
-      { icon: FileText, label: 'Eʼlonlarim', path: '/employer/jobs' },
-      { icon: Users, label: 'Nomzodlar', path: '/employer/applicants' },
-      { icon: Users, label: 'Ishchilar bazasi', path: '/workers' },
-      { icon: Briefcase, label: 'Xizmatlar', path: '/employer/worker-services' },
-      { icon: CheckCircle, label: 'Shartnomalar', path: '/employer/contracts' },
-      { icon: MessageSquare, label: 'Xabarlar', path: '/chat' },
-      { icon: User, label: 'Tashkilot profili', path: '/my-profile' },
-      { icon: Bell, label: 'Bildirishnomalar', path: '/notifications' },
+      { icon: LayoutDashboard, label: t('sidebar.dashboard'), path: '/employer/dashboard' },
+      { icon: Briefcase, label: t('sidebar.post_job'), path: '/employer/create-job' },
+      { icon: FileText, label: t('sidebar.my_jobs'), path: '/employer/jobs' },
+      { icon: Users, label: t('sidebar.applicants'), path: '/employer/applicants' },
+      { icon: Users, label: t('sidebar.worker_base'), path: '/workers' },
+      { icon: Briefcase, label: t('sidebar.services'), path: '/employer/worker-services' },
+      { icon: CheckCircle, label: t('sidebar.contracts'), path: '/employer/contracts' },
+      { icon: MessageSquare, label: t('sidebar.messages'), path: '/chat' },
+      { icon: User, label: t('sidebar.org_profile'), path: '/my-profile' },
+      { icon: Bell, label: t('sidebar.notifications'), path: '/notifications' },
     ],
     admin: [
-      { icon: BarChart3, label: 'Umumiy koʻrinish', path: '/admin/dashboard' },
-      { icon: Users, label: 'Foydalanuvchilar', path: '/admin/users' },
-      { icon: Briefcase, label: 'Ishlar', path: '/admin/jobs' },
-      { icon: CheckCircle, label: 'Shartnomalar', path: '/admin/contracts' },
-      { icon: AlertTriangle, label: 'Nizolar', path: '/admin/disputes' },
-      { icon: ShieldCheck, label: 'Tasdiqlash', path: '/admin/verification' },
-      { icon: BarChart3, label: 'Statistika', path: '/statistics' },
-      { icon: Settings, label: 'Sozlamalar', path: '/admin/settings' },
+      { icon: BarChart3, label: t('sidebar.overview'), path: '/admin/dashboard' },
+      { icon: Users, label: t('sidebar.users'), path: '/admin/users' },
+      { icon: Briefcase, label: t('sidebar.jobs'), path: '/admin/jobs' },
+      { icon: CheckCircle, label: t('sidebar.contracts'), path: '/admin/contracts' },
+      { icon: AlertTriangle, label: t('sidebar.disputes'), path: '/admin/disputes' },
+      { icon: ShieldCheck, label: t('sidebar.verification'), path: '/admin/verification' },
+      { icon: BarChart3, label: t('sidebar.statistics'), path: '/statistics' },
+      { icon: Settings, label: t('sidebar.settings'), path: '/admin/settings' },
     ],
     super_admin: [
-      { icon: LayoutDashboard, label: 'Global boshqaruv', path: '/super-admin/dashboard' },
-      { icon: Users, label: 'Barcha foydalanuvchilar', path: '/admin/users' },
-      { icon: Briefcase, label: 'Barcha ishlar', path: '/admin/jobs' },
-      { icon: ShieldCheck, label: 'Tasdiqlash navbati', path: '/admin/verification' },
-      { icon: AlertTriangle, label: 'Nizolar', path: '/admin/disputes' },
-      { icon: CheckCircle, label: 'Shartnomalar auditi', path: '/admin/contracts' },
-      { icon: Activity, label: 'Tizim jurnallari', path: '/admin/logs' },
-      { icon: Settings, label: 'Tizim sozlamalari', path: '/admin/settings' },
-      { icon: MessageSquare, label: 'Xabarlar', path: '/chat' },
-      { icon: Bell, label: 'Bildirishnomalar', path: '/notifications' },
+      { icon: LayoutDashboard, label: t('sidebar.global_mgmt'), path: '/super-admin/dashboard' },
+      { icon: Users, label: t('sidebar.all_users'), path: '/admin/users' },
+      { icon: Briefcase, label: t('sidebar.all_jobs_admin'), path: '/admin/jobs' },
+      { icon: ShieldCheck, label: t('sidebar.verification_queue'), path: '/admin/verification' },
+      { icon: AlertTriangle, label: t('sidebar.disputes'), path: '/admin/disputes' },
+      { icon: CheckCircle, label: t('sidebar.contract_audit'), path: '/admin/contracts' },
+      { icon: Activity, label: t('sidebar.system_logs'), path: '/admin/logs' },
+      { icon: Settings, label: t('sidebar.system_settings'), path: '/admin/settings' },
+      { icon: MessageSquare, label: t('sidebar.messages'), path: '/chat' },
+      { icon: Bell, label: t('sidebar.notifications'), path: '/notifications' },
     ]
   };
 
@@ -91,9 +94,9 @@ export default function Sidebar() {
           <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
             <Briefcase className="text-white w-6 h-6" />
           </div>
-          <h1 className="text-xl font-black text-white tracking-tight">QULAY ISH</h1>
+          <h1 className="text-xl font-black text-white tracking-tight">{t('common.branding_short')}</h1>
         </div>
-        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Milliy ish platformasi</p>
+        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">{t('common.national_platform')}</p>
       </div>
 
       <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto custom-scrollbar">
@@ -136,7 +139,7 @@ export default function Sidebar() {
             </div>
             <div className="min-w-0">
               <p className="text-xs font-black text-white truncate">{profile?.fullName}</p>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">{profile?.role}</p>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">{t(`auth.${profile?.role}`)}</p>
             </div>
           </div>
         </div>

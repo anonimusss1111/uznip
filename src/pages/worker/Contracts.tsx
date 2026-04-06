@@ -8,17 +8,33 @@ import { motion, AnimatePresence } from 'motion/react';
 import { FileText, CheckCircle, XCircle, Clock, DollarSign, User, Briefcase, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
-import { uz } from 'date-fns/locale';
+import { uz, ru, enUS } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 
 export default function WorkerContracts() {
-  const { profile } = useAuth();
-  const [contracts, setContracts] = useState<(Contract & { employer?: Profile; job?: Job })[]>([]);
+  const { t, i18n } = useTranslation();
+  const { profile, isDemo } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [contracts, setContracts] = useState<(Contract & { employer?: Profile; job?: Job })[]>([]);
+  const getDateLocale = () => {
+    switch (i18n.language) {
+      case 'ru': return ru;
+      case 'en': return enUS;
+      default: return uz;
+    }
+  };
 
   useEffect(() => {
     async function fetchContracts() {
       if (!profile?.uid) return;
       setLoading(true);
+
+      if (isDemo) {
+        setContracts([]);
+        setLoading(false);
+        return;
+      }
+
       try {
         const q = query(
           collection(db, 'contracts'),
@@ -65,8 +81,8 @@ export default function WorkerContracts() {
     <DashboardLayout>
       <div className="space-y-8">
         <div>
-          <h2 className="text-3xl font-bold text-foreground tracking-tight">Shartnomalar</h2>
-          <p className="text-muted-foreground mt-2">Sizning barcha faol va yakunlangan shartnomalaringiz.</p>
+          <h2 className="text-3xl font-bold text-foreground tracking-tight">{t('sidebar.contracts')}</h2>
+          <p className="text-muted-foreground mt-2">{t('worker_dashboard.contracts_desc')}</p>
         </div>
 
         {loading ? (
@@ -101,14 +117,14 @@ export default function WorkerContracts() {
                           )}
                         </div>
                         <div>
-                          <h4 className="text-xl font-bold text-foreground">{contract.employer?.fullName || 'Nomaʻlum'}</h4>
-                          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Ish beruvchi</p>
+                          <h4 className="text-xl font-bold text-foreground">{contract.employer?.fullName || t('common.unknown')}</h4>
+                          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">{t('auth.employer')}</p>
                           <div className="flex items-center gap-2 mt-3">
                             <Link 
                               to={`/chat?with=${contract.employerId}`}
                               className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
                             >
-                              Chat boshlash <ChevronRight size={12} />
+                              {t('common.start_chat')} <ChevronRight size={12} />
                             </Link>
                           </div>
                         </div>
@@ -118,26 +134,26 @@ export default function WorkerContracts() {
                       <div className="flex-1 space-y-4">
                         <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
                           <Briefcase size={14} />
-                          <span>Ish: {contract.job?.title || 'Oʻchirilgan ish'}</span>
+                          <span>{t('jobs.job')}: {contract.job?.title || t('jobs.deleted_job')}</span>
                         </div>
                         
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                           <div>
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Ish haqi</p>
-                            <p className="text-lg font-bold text-primary">{contract.amount.toLocaleString()} UZS</p>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t('jobs.price')}</p>
+                            <p className="text-lg font-bold text-primary">{contract.amount.toLocaleString()} {t('common.uzs')}</p>
                           </div>
                           <div>
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Muddati</p>
-                            <p className="text-sm font-bold">{format(new Date(contract.startDate), 'd MMM')} - {format(new Date(contract.endDate), 'd MMM')}</p>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t('common.duration')}</p>
+                            <p className="text-sm font-bold">{format(new Date(contract.startDate), 'd MMM', { locale: getDateLocale() })} - {format(new Date(contract.endDate), 'd MMM', { locale: getDateLocale() })}</p>
                           </div>
                           <div>
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Status</p>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t('common.status')}</p>
                             <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mt-1 ${
                               contract.status === 'active' ? 'bg-green-50 text-green-600' : 
                               contract.status === 'draft' ? 'bg-amber-50 text-amber-600' :
                               'bg-gray-100 text-gray-500'
                             }`}>
-                              {contract.status === 'active' ? 'Faol' : contract.status === 'draft' ? 'Kutilmoqda' : 'Yakunlangan'}
+                              {contract.status === 'active' ? t('employer_dashboard.active') : contract.status === 'draft' ? t('employer_dashboard.pending') : t('employer_dashboard.closed')}
                             </span>
                           </div>
                         </div>
@@ -155,12 +171,12 @@ export default function WorkerContracts() {
                             className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-lg shadow-primary/20"
                           >
                             <CheckCircle size={18} />
-                            Imzolash
+                            {t('common.sign')}
                           </button>
                         ) : (
                           <div className="py-3 bg-green-50 text-green-700 border border-green-100 rounded-xl font-bold flex items-center justify-center gap-2">
                             <CheckCircle size={18} />
-                            Imzolangan
+                            {t('common.signed')}
                           </div>
                         )}
                         
@@ -169,7 +185,7 @@ export default function WorkerContracts() {
                           className="w-full py-3 bg-card border border-border rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-secondary transition-all"
                         >
                           <FileText size={18} />
-                          Batafsil koʻrish
+                          {t('common.view_details')}
                         </Link>
                       </div>
                     </div>
@@ -183,8 +199,8 @@ export default function WorkerContracts() {
             <div className="w-20 h-20 bg-card rounded-full flex items-center justify-center mx-auto mb-6 text-muted-foreground shadow-sm">
               <FileText size={40} />
             </div>
-            <h3 className="text-xl font-bold text-foreground">Shartnomalar topilmadi</h3>
-            <p className="text-muted-foreground mt-2">Hozircha hech qanday shartnoma tuzilmagan.</p>
+            <h3 className="text-xl font-bold text-foreground">{t('worker_dashboard.no_contracts')}</h3>
+            <p className="text-muted-foreground mt-2">{t('worker_dashboard.no_contracts_desc')}</p>
           </div>
         )}
       </div>
