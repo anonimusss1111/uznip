@@ -62,7 +62,11 @@
     "paused": "Paused",
     "branding_short": "QULAY ISH",
     "uzs": "UZS",
-    "region_name": "Samarkand region"
+    "region_name": "Samarkand region",
+    "fill_all_fields": "Please fill in all required fields",
+    "error_occurred": "An error occurred while saving",
+    "saving": "Saving...",
+    "select": "Select"
   },
   "nav": {
     "jobs_link": "Jobs",
@@ -170,6 +174,7 @@
   },
   "employer": {
     "dashboard": {
+      "welcome": "Welcome, {{name}}!",
       "title": "Employer Dashboard",
       "subtitle": "Manage your job posts and find the best specialists.",
       "post_job": "Post New Job",
@@ -211,7 +216,19 @@
       "applications_management": "Applications Management",
       "applications_management_desc": "Review all incoming applications and select suitable candidates.",
       "create_contract": "Create Contract",
-      "no_applications_desc": "No applications have been received yet."
+      "no_applications_desc": "No applications have been received yet.",
+      "post_job": "Post New Job",
+      "post_job_desc": "Create a new job opening and find suitable candidates.",
+      "job_created": "Job successfully created!",
+      "redirecting": "Redirecting...",
+      "basic_info": "Basic Information",
+      "job_title": "Job Title",
+      "job_title_placeholder": "e.g., House Cleaning",
+      "job_desc_placeholder": "Describe the work in detail...",
+      "price_and_duration": "Price and Duration",
+      "offered_price": "Offered Price",
+      "job_type": "Job Type",
+      "requirement_placeholder": "e.g., Experience required"
     }
   },
   "worker": {
@@ -400,6 +417,13 @@
     "error_code": "Invalid verification code.",
     "recaptcha_expired": "ReCAPTCHA expired. Please try again."
   },
+  "errors": {
+    "unexpected": "An unexpected error occurred.",
+    "no_permission": "You do not have permission to perform this action.",
+    "title": "An error occurred",
+    "refresh": "Refresh page",
+    "back_home": "Back to home"
+  },
   "dashboard": {
     "employer_title": "Employer Dashboard",
     "worker_title": "Worker Dashboard",
@@ -530,6 +554,18 @@
     "view_details": "View details",
     "no_notifications": "No notifications",
     "no_notifications_desc": "You have no new notifications at the moment."
+  },
+  "contracts": {
+    "create_title": "Create Contract",
+    "create_subtitle": "Formalize the agreement with the specialist",
+    "start_date": "Start Date",
+    "end_date": "End Date",
+    "terms": "Terms and Conditions",
+    "terms_placeholder": "Describe additional terms...",
+    "warning_desc": "This contract is a legal agreement. Please ensure all terms are correct before signing.",
+    "confirm_and_send": "Confirm and Send",
+    "parties": "Parties",
+    "job_info": "Job Information"
   },
   "verification": {
     "title": "Identity Verification",

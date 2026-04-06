@@ -1,17 +1,20 @@
 import React from 'react';
 import Sidebar from './Sidebar';
+import BackButton from './BackButton';
 import { useAuth } from '../hooks/useAuth';
-import { Navigate } from 'react-router-dom';
-import { Bell, Search, User, Sun, Moon, Globe } from 'lucide-react';
+import { Navigate, useLocation } from 'react-router-dom';
+import { Bell, Search, User, Sun, Moon, Globe, ChevronDown } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
+import { cn } from '../lib/utils';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { profile, loading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { t, i18n } = useTranslation();
   const [isLangOpen, setIsLangOpen] = React.useState(false);
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -31,12 +34,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { code: 'en', name: t('common.english'), flag: '🇺🇸' },
   ];
 
+  const currentLang = languages.find(l => l.code === i18n.language) || languages[0];
+
+  // Don't show back button on main dashboards
+  const isMainDashboard = ['/worker/dashboard', '/employer/dashboard', '/admin/dashboard', '/super-admin/dashboard'].includes(location.pathname);
+
   return (
     <div className="flex min-h-screen bg-background transition-colors duration-500">
       <Sidebar />
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <header className="h-24 bg-card/80 backdrop-blur-xl border-b border-border flex items-center justify-between px-10 sticky top-0 z-40 transition-all duration-500">
           <div className="flex items-center gap-6 flex-1 max-w-2xl">
+            {!isMainDashboard && <BackButton />}
             <div className="relative w-full group">
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
               <input
@@ -52,9 +61,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="relative">
               <button
                 onClick={() => setIsLangOpen(!isLangOpen)}
-                className="p-4 rounded-2xl bg-secondary text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all duration-300"
+                className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-secondary text-foreground hover:text-primary hover:bg-primary/5 transition-all duration-300 border border-border/50"
               >
-                <Globe className="w-5 h-5" />
+                <Globe className="w-5 h-5 text-primary" />
+                <span className="text-sm font-black uppercase tracking-widest">{currentLang.code}</span>
+                <ChevronDown className={cn("w-4 h-4 transition-transform duration-300", isLangOpen ? "rotate-180" : "")} />
               </button>
               <AnimatePresence>
                 {isLangOpen && (
@@ -62,7 +73,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute right-0 mt-2 w-40 bg-card border border-border rounded-2xl shadow-xl overflow-hidden py-1 z-50"
+                    className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden py-2 z-50"
                   >
                     {languages.map((lang) => (
                       <button
@@ -71,12 +82,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                           i18n.changeLanguage(lang.code);
                           setIsLangOpen(false);
                         }}
-                        className={`w-full text-left px-4 py-2.5 text-sm font-medium flex items-center space-x-3 hover:bg-secondary transition-colors ${
+                        className={`w-full text-left px-5 py-3 text-sm font-bold flex items-center justify-between hover:bg-secondary transition-colors ${
                           i18n.language === lang.code ? 'text-primary bg-primary/5' : 'text-foreground'
                         }`}
                       >
-                        <span>{lang.flag}</span>
-                        <span>{lang.name}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg">{lang.flag}</span>
+                          <span>{lang.name}</span>
+                        </div>
+                        {i18n.language === lang.code && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
                       </button>
                     ))}
                   </motion.div>

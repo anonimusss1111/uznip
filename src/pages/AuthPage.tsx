@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { auth, db } from '../firebase';
+import { auth, db, handleFirestoreError, OperationType } from '../firebase';
 import { 
   signInWithPopup, 
   GoogleAuthProvider, 
@@ -49,6 +49,16 @@ export default function AuthPage() {
   const [error, setError] = React.useState<string | null>(null);
   const navigate = useNavigate();
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
+  const { user, profile: authProfile, loading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (!authLoading && user && authProfile) {
+      if (authProfile.role === 'worker') navigate('/worker/dashboard');
+      else if (authProfile.role === 'employer') navigate('/employer/dashboard');
+      else if (authProfile.role === 'admin') navigate('/admin/dashboard');
+      else if (authProfile.role === 'super_admin') navigate('/super-admin/dashboard');
+    }
+  }, [user, authProfile, authLoading, navigate]);
 
   useEffect(() => {
     return () => {
@@ -89,9 +99,20 @@ export default function AuthPage() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      const profileDoc = await getDoc(doc(db, 'profiles', user.uid));
-      if (profileDoc.exists()) {
-        navigate('/');
+      let profileDoc;
+      try {
+        profileDoc = await getDoc(doc(db, 'profiles', user.uid));
+      } catch (error) {
+        handleFirestoreError(error, OperationType.GET, `profiles/${user.uid}`);
+      }
+
+      if (profileDoc && profileDoc.exists()) {
+        const profileData = profileDoc.data();
+        if (profileData.role === 'worker') navigate('/worker/dashboard');
+        else if (profileData.role === 'employer') navigate('/employer/dashboard');
+        else if (profileData.role === 'admin') navigate('/admin/dashboard');
+        else if (profileData.role === 'super_admin') navigate('/super-admin/dashboard');
+        else navigate('/home');
       } else {
         setStep(2);
       }
@@ -147,9 +168,20 @@ export default function AuthPage() {
       const result = await confirmationResult.confirm(verificationCode);
       const user = result.user;
 
-      const profileDoc = await getDoc(doc(db, 'profiles', user.uid));
-      if (profileDoc.exists()) {
-        navigate('/');
+      let profileDoc;
+      try {
+        profileDoc = await getDoc(doc(db, 'profiles', user.uid));
+      } catch (error) {
+        handleFirestoreError(error, OperationType.GET, `profiles/${user.uid}`);
+      }
+
+      if (profileDoc && profileDoc.exists()) {
+        const profileData = profileDoc.data();
+        if (profileData.role === 'worker') navigate('/worker/dashboard');
+        else if (profileData.role === 'employer') navigate('/employer/dashboard');
+        else if (profileData.role === 'admin') navigate('/admin/dashboard');
+        else if (profileData.role === 'super_admin') navigate('/super-admin/dashboard');
+        else navigate('/home');
       } else {
         setStep(2);
       }
@@ -165,7 +197,7 @@ export default function AuthPage() {
     if (!auth.currentUser) return;
     setLoading(true);
     try {
-      await setDoc(doc(db, 'profiles', auth.currentUser.uid), {
+      const profileData = {
         uid: auth.currentUser.uid,
         fullName: formData.fullName,
         role,
@@ -182,10 +214,22 @@ export default function AuthPage() {
         isVerified: false,
         photoUrl: auth.currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.fullName)}&background=random`,
         createdAt: serverTimestamp()
-      });
-      navigate('/');
+      };
+
+      try {
+        await setDoc(doc(db, 'profiles', auth.currentUser.uid), profileData);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.WRITE, `profiles/${auth.currentUser.uid}`);
+      }
+      
+      if (role === 'worker') navigate('/worker/dashboard');
+      else if (role === 'employer') navigate('/employer/dashboard');
+      else if (role === 'admin') navigate('/admin/dashboard');
+      else if (role === 'super_admin') navigate('/super-admin/dashboard');
+      else navigate('/home');
     } catch (error) {
       console.error("Profile creation error:", error);
+      setError(t('common.error'));
     } finally {
       setLoading(false);
     }

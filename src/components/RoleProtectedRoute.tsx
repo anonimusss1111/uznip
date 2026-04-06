@@ -3,8 +3,8 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 
-export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, profile, loading } = useAuth();
+export default function RoleProtectedRoute({ children, allowedRoles }: { children: React.ReactNode, allowedRoles: string[] }) {
+  const { profile, loading } = useAuth();
   const { t } = useTranslation();
 
   if (loading) {
@@ -18,10 +18,8 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     );
   }
 
-  if (!user) return <Navigate to="/" />;
-  
-  // If user is authenticated but has no profile, they must complete registration
   if (!profile) return <Navigate to="/" />;
+  if (!allowedRoles.includes(profile.role)) return <Navigate to="/" />;
 
   return <>{children}</>;
 }

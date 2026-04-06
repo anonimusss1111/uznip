@@ -62,7 +62,11 @@
     "paused": "Toʻxtatilgan",
     "branding_short": "QULAY ISH",
     "uzs": "soʻm",
-    "region_name": "Samarqand viloyati"
+    "region_name": "Samarqand viloyati",
+    "fill_all_fields": "Iltimos, barcha majburiy maydonlarni toʻldiring",
+    "error_occurred": "Saqlashda xatolik yuz berdi",
+    "saving": "Saqlanmoqda...",
+    "select": "Tanlash"
   },
   "nav": {
     "jobs_link": "Ishlar",
@@ -170,6 +174,7 @@
   },
   "employer": {
     "dashboard": {
+      "welcome": "Xush kelibsiz, {{name}}!",
       "title": "Ish beruvchi paneli",
       "subtitle": "Eʼlonlaringizni boshqaring va eng yaxshi mutaxassislarni toping.",
       "post_job": "Yangi eʼlon berish",
@@ -211,7 +216,19 @@
       "applications_management": "Arizalarni boshqarish",
       "applications_management_desc": "Kelib tushgan barcha arizalarni koʻrib chiqing va munosib nomzodlarni tanlang.",
       "create_contract": "Shartnoma tuzish",
-      "no_applications_desc": "Hozircha hech qanday ariza kelib tushmagan."
+      "no_applications_desc": "Hozircha hech qanday ariza kelib tushmagan.",
+      "post_job": "Yangi eʼlon berish",
+      "post_job_desc": "Yangi ish oʻrni yarating va munosib nomzodlarni toping.",
+      "job_created": "Ish muvaffaqiyatli yaratildi!",
+      "redirecting": "Yoʻnaltirilmoqda...",
+      "basic_info": "Asosiy maʼlumotlar",
+      "job_title": "Ish nomi",
+      "job_title_placeholder": "Masalan: Uy tozalash",
+      "job_desc_placeholder": "Ishni batafsil tavsiflang...",
+      "price_and_duration": "Narx va davomiylik",
+      "offered_price": "Taklif etilayotgan narx",
+      "job_type": "Ish turi",
+      "requirement_placeholder": "Masalan: Tajriba talab qilinadi"
     }
   },
   "worker": {
@@ -400,6 +417,13 @@
     "error_code": "Tasdiqlash kodi notoʻgʻri.",
     "recaptcha_expired": "ReCAPTCHA muddati tugadi. Iltimos, qaytadan urinib koʻring."
   },
+  "errors": {
+    "unexpected": "Kutilmagan xatolik yuz berdi.",
+    "no_permission": "Sizda ushbu amalni bajarish uchun ruxsat yoʻq.",
+    "title": "Xatolik yuz berdi",
+    "refresh": "Sahifani yangilash",
+    "back_home": "Bosh sahifaga qaytish"
+  },
   "dashboard": {
     "employer_title": "Ish beruvchi paneli",
     "worker_title": "Ishchi paneli",
@@ -530,6 +554,18 @@
     "view_details": "Batafsil koʻrish",
     "no_notifications": "Bildirishnomalar yoʻq",
     "no_notifications_desc": "Hozircha sizda hech qanday yangi bildirishnoma mavjud emas."
+  },
+  "contracts": {
+    "create_title": "Shartnoma tuzish",
+    "create_subtitle": "Mutaxassis bilan kelishuvni rasmiylashtiring",
+    "start_date": "Boshlanish sanasi",
+    "end_date": "Tugash sanasi",
+    "terms": "Shartlar va qoidalar",
+    "terms_placeholder": "Qoʻshimcha shartlarni tavsiflang...",
+    "warning_desc": "Ushbu shartnoma qonuniy kelishuvdir. Iltimos, imzolashdan oldin barcha shartlar toʻgʻriligiga ishonch hosil qiling.",
+    "confirm_and_send": "Tasdiqlash va yuborish",
+    "parties": "Tomonlar",
+    "job_info": "Ish haqida maʼlumot"
   },
   "verification": {
     "title": "Shaxsni tasdiqlash",

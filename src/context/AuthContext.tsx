@@ -16,58 +16,75 @@ interface AuthContextType {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('demo_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [profile, setProfile] = useState<Profile | null>(() => {
+    const saved = localStorage.getItem('demo_profile');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [loading, setLoading] = useState(true);
-  const [isDemo, setIsDemo] = useState(false);
+  const [isDemo, setIsDemo] = useState(() => localStorage.getItem('is_demo') === 'true');
 
   useEffect(() => {
-    if (isDemo) return;
+    if (isDemo) {
+      setLoading(false);
+      return;
+    }
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       setUser(user);
-      if (user) {
-        const profileRef = doc(db, 'profiles', user.uid);
-        const unsubscribeProfile = onSnapshot(profileRef, (doc) => {
-          if (doc.exists()) {
-            setProfile(doc.data() as Profile);
-          } else {
-            setProfile(null);
-          }
-          setLoading(false);
-        }, (error) => {
-          console.error("Profile fetch error:", error);
-          setLoading(false);
-        });
-        return () => unsubscribeProfile();
-      } else {
+      if (!user) {
         setProfile(null);
         setLoading(false);
       }
     });
 
-    return () => unsubscribe();
+    return () => unsubscribeAuth();
   }, [isDemo]);
+
+  useEffect(() => {
+    if (isDemo || !user) return;
+
+    setLoading(true);
+    const profileRef = doc(db, 'profiles', user.uid);
+    const unsubscribeProfile = onSnapshot(profileRef, (doc) => {
+      if (doc.exists()) {
+        setProfile(doc.data() as Profile);
+      } else {
+        setProfile(null);
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error("Profile fetch error:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribeProfile();
+  }, [user, isDemo]);
 
   const signOut = async () => {
     if (isDemo) {
       setIsDemo(false);
       setProfile(null);
       setUser(null);
+      localStorage.removeItem('is_demo');
+      localStorage.removeItem('demo_user');
+      localStorage.removeItem('demo_profile');
     } else {
       await firebaseSignOut(auth);
     }
   };
 
   const setDemoProfile = (role: 'worker' | 'employer' | 'admin' | 'super_admin') => {
-    setIsDemo(true);
-    setUser({
+    const demoUser = {
       uid: `demo_${role}`,
       email: `demo_${role}@example.com`,
       displayName: `Demo ${role.replace('_', ' ')}`,
-    } as any);
+    } as any;
     
-    setProfile({
+    const demoProfile = {
       uid: `demo_${role}`,
       fullName: `Demo ${role.charAt(0).toUpperCase() + role.slice(1).replace('_', ' ')}`,
       role: role,
@@ -79,8 +96,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       reviewCount: 12,
       completedJobs: 5,
       createdAt: new Date().toISOString(),
-    } as Profile);
+    } as Profile;
+
+    setIsDemo(true);
+    setUser(demoUser);
+    setProfile(demoProfile);
     setLoading(false);
+
+    localStorage.setItem('is_demo', 'true');
+    localStorage.setItem('demo_user', JSON.stringify(demoUser));
+    localStorage.setItem('demo_profile', JSON.stringify(demoProfile));
   };
 
   return (

@@ -23,27 +23,17 @@ import MyServicePosts from './pages/worker/MyServicePosts';
 import ContractPage from './pages/ContractPage';
 import VerificationPage from './pages/VerificationPage';
 import NotificationsPage from './pages/NotificationsPage';
-import ProtectedRoute from './components/ProtectedRoute';
-import { useAuth, AuthProvider } from './context/AuthContext';
-import { ThemeProvider } from './context/ThemeContext';
-import ChatAssistant from './components/ChatAssistant';
-import ErrorBoundary from './components/ErrorBoundary';
-
-function RoleProtectedRoute({ children, allowedRoles }: { children: React.ReactNode, allowedRoles: string[] }) {
-  const { profile, loading } = useAuth();
-
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>;
-  if (!profile) return <Navigate to="/auth" />;
-  if (!allowedRoles.includes(profile.role)) return <Navigate to="/" />;
-
-  return <>{children}</>;
-}
-
 import EmployerApplications from './pages/employer/Applications';
 import EmployerJobDetails from './pages/employer/JobDetails';
 import CreateContract from './pages/employer/CreateContract';
 import WorkerApplications from './pages/worker/Applications';
 import WorkerContracts from './pages/worker/Contracts';
+import ProtectedRoute from './components/ProtectedRoute';
+import RoleProtectedRoute from './components/RoleProtectedRoute';
+import { useAuth, AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
+import ChatAssistant from './components/ChatAssistant';
+import ErrorBoundary from './components/ErrorBoundary';
 
 export default function App() {
   return (
@@ -53,9 +43,10 @@ export default function App() {
           <ErrorBoundary>
             <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
               <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/auth" element={<AuthPage />} />
-        <Route path="/jobs" element={<JobsPage />} />
+                <Route path="/" element={<AuthPage />} />
+                <Route path="/home" element={<LandingPage />} />
+                <Route path="/auth" element={<Navigate to="/" replace />} />
+                <Route path="/jobs" element={<JobsPage />} />
         <Route path="/workers" element={<WorkersPage />} />
         <Route path="/worker/:userId" element={<ProfilePage />} />
         <Route path="/statistics" element={<StatisticsPage />} />

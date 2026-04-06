@@ -117,8 +117,8 @@ export default function CreateJob() {
     <DashboardLayout>
       <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">{t('employer_dashboard.post_job')}</h1>
-          <p className="text-gray-500 mt-2">{t('employer_dashboard.post_job_desc')}</p>
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight">{t('employer.dashboard.post_job')}</h1>
+          <p className="text-gray-500 mt-2">{t('employer.dashboard.post_job_desc')}</p>
         </div>
 
         <AnimatePresence>
@@ -143,8 +143,8 @@ export default function CreateJob() {
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-green-600 mx-auto mb-6">
                 <CheckCircle size={48} />
               </div>
-              <h2 className="text-2xl font-black text-gray-900 mb-2">{t('employer_dashboard.job_created')}</h2>
-              <p className="text-gray-600">{t('employer_dashboard.redirecting')}...</p>
+              <h2 className="text-2xl font-black text-gray-900 mb-2">{t('employer.dashboard.job_created')}</h2>
+              <p className="text-gray-600">{t('employer.dashboard.redirecting')}...</p>
             </motion.div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-8">
@@ -154,19 +154,19 @@ export default function CreateJob() {
                   <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
                     <Briefcase size={20} />
                   </div>
-                  <h2 className="text-xl font-bold text-gray-900">{t('employer_dashboard.basic_info')}</h2>
+                  <h2 className="text-xl font-bold text-gray-900">{t('employer.dashboard.basic_info')}</h2>
                 </div>
 
                 <div className="grid grid-cols-1 gap-6">
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t('employer_dashboard.job_title')}</label>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t('employer.dashboard.job_title')}</label>
                     <input
                       type="text"
                       required
                       value={formData.title}
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                       className="w-full px-5 py-4 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                      placeholder={t('employer_dashboard.job_title_placeholder')}
+                      placeholder={t('employer.dashboard.job_title_placeholder')}
                     />
                   </div>
 
@@ -191,7 +191,7 @@ export default function CreateJob() {
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       className="w-full px-5 py-4 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
-                      placeholder={t('employer_dashboard.job_desc_placeholder')}
+                      placeholder={t('employer.dashboard.job_desc_placeholder')}
                     />
                   </div>
                 </div>
@@ -244,12 +244,12 @@ export default function CreateJob() {
                     <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
                       <DollarSign size={20} />
                     </div>
-                    <h2 className="text-xl font-bold text-gray-900">{t('employer_dashboard.price_and_duration')}</h2>
+                    <h2 className="text-xl font-bold text-gray-900">{t('employer.dashboard.price_and_duration')}</h2>
                   </div>
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('employer_dashboard.offered_price')}</label>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('employer.dashboard.offered_price')}</label>
                       <input
                         type="number"
                         required
@@ -261,7 +261,7 @@ export default function CreateJob() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('employer_dashboard.job_type')}</label>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t('employer.dashboard.job_type')}</label>
                       <select
                         value={formData.workType}
                         onChange={(e) => setFormData({ ...formData, workType: e.target.value })}
@@ -292,7 +292,7 @@ export default function CreateJob() {
                       value={formData.currentRequirement}
                       onChange={(e) => setFormData({ ...formData, currentRequirement: e.target.value })}
                       className="flex-1 px-4 py-3 rounded-xl border border-gray-200 outline-none"
-                      placeholder={t('employer_dashboard.requirement_placeholder')}
+                      placeholder={t('employer.dashboard.requirement_placeholder')}
                     />
                     <button
                       type="button"
@@ -326,7 +326,7 @@ export default function CreateJob() {
                   disabled={loading}
                   className="px-12 py-5 bg-blue-600 text-white rounded-3xl font-black text-xl hover:bg-blue-700 shadow-2xl shadow-blue-200 transition-all disabled:opacity-50"
                 >
-                  {loading ? t('common.saving') : t('employer_dashboard.post_job')}
+                  {loading ? t('common.saving') : t('employer.dashboard.post_job')}
                 </button>
               </div>
             </form>
