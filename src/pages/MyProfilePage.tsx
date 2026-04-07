@@ -22,7 +22,8 @@ export default function MyProfilePage() {
     bio: '',
     skills: [] as string[],
     experienceLevel: '',
-    phoneNumber: ''
+    phoneNumber: '',
+    isPremium: false
   });
   const [saving, setSaving] = React.useState(false);
 
@@ -36,7 +37,8 @@ export default function MyProfilePage() {
         bio: profile.bio || '',
         skills: profile.skills || [],
         experienceLevel: profile.experienceLevel || 'Boshlangʻich',
-        phoneNumber: profile.phoneNumber || ''
+        phoneNumber: profile.phoneNumber || '',
+        isPremium: profile.isPremium || false
       });
     }
   }, [profile]);
@@ -112,8 +114,15 @@ export default function MyProfilePage() {
                 />
               </div>
               <h2 className="text-xl font-black text-gray-900 mb-1">{profile.fullName}</h2>
-              <div className="bg-blue-50 text-blue-600 text-[10px] font-bold px-3 py-1 rounded-full inline-block uppercase tracking-widest mb-4">
-                {profile.role === 'worker' ? t('auth.worker') : t('auth.employer')}
+              <div className="flex flex-col items-center gap-2 mb-4">
+                <div className="bg-blue-50 text-blue-600 text-[10px] font-bold px-3 py-1 rounded-full inline-block uppercase tracking-widest">
+                  {profile.role === 'worker' ? t('auth.worker') : t('auth.employer')}
+                </div>
+                {profile.isPremium && (
+                  <div className="bg-amber-50 text-amber-600 text-[10px] font-bold px-3 py-1 rounded-full inline-block uppercase tracking-widest border border-amber-100">
+                    Premium
+                  </div>
+                )}
               </div>
               
               {profile.role === 'worker' && (
@@ -184,6 +193,21 @@ export default function MyProfilePage() {
                       placeholder={t('profile.about_me_placeholder')}
                     />
                   </div>
+                  {isEditing && (
+                    <div className="flex items-center justify-between p-4 bg-amber-50 rounded-2xl border border-amber-100">
+                      <div>
+                        <p className="text-sm font-bold text-amber-900">Premium Status</p>
+                        <p className="text-xs text-amber-700">Enable premium features for testing</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, isPremium: !prev.isPremium }))}
+                        className={`w-12 h-6 rounded-full transition-all relative ${formData.isPremium ? 'bg-amber-500' : 'bg-gray-300'}`}
+                      >
+                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.isPremium ? 'left-7' : 'left-1'}`} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </section>
 

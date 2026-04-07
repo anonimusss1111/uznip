@@ -43,6 +43,11 @@ export default function WorkerCard({ worker }: WorkerCardProps) {
         <div className="flex-1">
           <div className="flex items-center space-x-2 mb-0.5">
             <h3 className="text-lg font-bold text-gray-900 leading-tight">{worker.fullName}</h3>
+            {worker.isPremium && (
+              <span className="bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded-lg flex items-center uppercase tracking-widest shadow-lg shadow-blue-600/20">
+                PREMIUM
+              </span>
+            )}
             {worker.rating && worker.rating >= 4.5 && (
               <span className="bg-yellow-50 text-yellow-700 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center">
                 <Award size={10} className="mr-0.5" /> {t('worker_profile.top_worker')}

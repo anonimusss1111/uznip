@@ -9,7 +9,7 @@ import { SKILLS } from '../constants/categories';
 import Layout from '../components/Layout';
 import WorkerCard from '../components/WorkerCard';
 import { useAuth } from '../hooks/useAuth';
-import { getDistrictKey } from '../lib/utils';
+import { getDistrictKey, cn } from '../lib/utils';
 
 import { useTranslation } from 'react-i18next';
 
@@ -77,33 +77,63 @@ export default function WorkersPage() {
 
   return (
     <Layout>
-      <div className="bg-blue-600 pt-12 pb-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-black text-white mb-8 tracking-tight">{t('workers.title')}</h1>
-          
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-4 text-gray-400" size={20} />
-              <input
-                type="text"
-                placeholder={t('workers.search_placeholder')}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 rounded-2xl border-none focus:ring-2 focus:ring-blue-400 outline-none shadow-lg text-lg"
-              />
-            </div>
-            <button
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-6 py-4 rounded-2xl font-bold flex items-center justify-center hover:bg-white/20 transition-all"
+      <div className="relative bg-slate-900 pt-24 pb-32 overflow-hidden">
+        {/* Background Decorative Elements */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+          <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl animate-pulse delay-700" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="max-w-3xl">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
             >
-              <SlidersHorizontal size={20} className="mr-2" />
-              {t('workers.filters')}
-            </button>
+              <span className="inline-flex items-center px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] mb-6">
+                {t('workers.subtitle')}
+              </span>
+              <h1 className="text-4xl md:text-6xl font-black text-white mb-8 tracking-tight leading-[1.1]">
+                {t('workers.title')}
+              </h1>
+            </motion.div>
+            
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="flex flex-col md:flex-row gap-4"
+            >
+              <div className="flex-1 relative group">
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors" size={20} />
+                <input
+                  type="text"
+                  placeholder={t('workers.search_placeholder')}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-14 pr-6 py-5 rounded-[2rem] bg-white/5 border border-white/10 text-white placeholder:text-slate-500 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500/50 outline-none transition-all text-lg font-medium backdrop-blur-xl"
+                />
+              </div>
+              <button
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className={cn(
+                  "px-8 py-5 rounded-[2rem] font-black uppercase tracking-widest flex items-center justify-center transition-all duration-500 border backdrop-blur-xl",
+                  isFilterOpen 
+                    ? "bg-blue-600 border-blue-500 text-white shadow-xl shadow-blue-600/40" 
+                    : "bg-white/5 border-white/10 text-white hover:bg-white/10"
+                )}
+              >
+                <SlidersHorizontal size={20} className={cn("mr-3 transition-transform duration-500", isFilterOpen && "rotate-180")} />
+                {t('workers.filters')}
+              </button>
+            </motion.div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 relative z-20">
         <AnimatePresence>
           {isFilterOpen && (
             <motion.div

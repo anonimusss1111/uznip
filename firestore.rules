@@ -46,27 +46,27 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    function getRole() {
-      return exists(/databases/$(database)/documents/profiles/$(request.auth.uid)) 
-        ? get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role 
-        : 'guest';
+    function hasRole(role) {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/profiles/$(request.auth.uid)) && 
+             get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == role;
     }
 
     function isSuperAdmin() {
       return isAuthenticated() && 
-        (getRole() == 'super_admin' || (request.auth.token.email == "eslabturing@gmail.com" && request.auth.token.email_verified == true));
+        (hasRole('super_admin') || (request.auth.token.email == "eslabturing@gmail.com" && request.auth.token.email_verified == true));
     }
 
     function isAdmin() {
-      return isAuthenticated() && (getRole() == 'admin' || isSuperAdmin());
+      return isAuthenticated() && (hasRole('admin') || isSuperAdmin());
     }
 
     function isWorker() {
-      return isAuthenticated() && getRole() == 'worker';
+      return hasRole('worker');
     }
 
     function isEmployer() {
-      return isAuthenticated() && getRole() == 'employer';
+      return hasRole('employer');
     }
 
     function hasRequiredFields(fields) {
@@ -90,26 +90,40 @@ service cloud.firestore {
     // ===============================================================
 
     function isValidProfile(data) {
-      return data.uid is string && data.fullName is string && data.fullName.size() > 0 &&
+      return data.uid is string && data.uid.size() < 128 &&
+             data.fullName is string && data.fullName.size() > 0 && data.fullName.size() < 100 &&
              data.role in ['worker', 'employer', 'admin', 'super_admin'] &&
-             data.region is string;
+             data.region is string && data.region.size() < 100 &&
+             (!('bio' in data) || (data.bio is string && data.bio.size() < 2000)) &&
+             (!('phoneNumber' in data) || (data.phoneNumber is string && data.phoneNumber.size() < 20)) &&
+             (!('skills' in data) || (data.skills is list && data.skills.size() < 50));
     }
 
     function isValidJob(data) {
-      return data.employerId is string && data.title is string && data.title.size() > 0 &&
-             data.category is string && data.price is number && data.price >= 0 &&
-             data.status in ['open', 'filled', 'in-progress', 'completed', 'closed'];
+      return data.employerId is string && data.employerId.size() < 128 &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.category is string && data.category.size() < 100 &&
+             data.price is number && data.price >= 0 && data.price < 1000000000 &&
+             data.status in ['open', 'filled', 'in-progress', 'completed', 'closed'] &&
+             (!('description' in data) || (data.description is string && data.description.size() < 5000));
     }
 
     function isValidApplication(data) {
       return data.jobId is string && data.workerId is string && data.employerId is string &&
-             data.status in ['pending', 'shortlisted', 'accepted', 'rejected'];
+             data.status in ['pending', 'shortlisted', 'accepted', 'rejected'] &&
+             (!('message' in data) || (data.message is string && data.message.size() < 1000));
     }
 
     function isValidContract(data) {
       return data.jobId is string && data.workerId is string && data.employerId is string &&
              data.amount is number && data.amount >= 0 &&
-             data.status in ['draft', 'signed', 'active', 'completed', 'disputed'];
+             data.status in ['draft', 'signed', 'active', 'completed', 'disputed'] &&
+             (!('terms' in data) || (data.terms is string && data.terms.size() < 10000));
+    }
+
+    function isValidChatMessage(data) {
+      return data.senderId is string && data.receiverId is string &&
+             data.text is string && data.text.size() > 0 && data.text.size() < 5000;
     }
 
     // ===============================================================
@@ -117,21 +131,27 @@ service cloud.firestore {
     // ===============================================================
 
     match /profiles/{uid} {
-      // Users can read their own profile. Admins can read all.
-      // Workers and Employers are public for the marketplace.
-      allow read: if true;
+      // Profiles are public but sensitive fields (email, phone) should be protected
+      // In a real app, we'd split this, but for now we allow read if authenticated
+      allow read: if isAuthenticated();
       
       // Only owner can create their profile.
-      allow create: if isOwner(uid) && isValidProfile(request.resource.data);
+      allow create: if isOwner(uid) && isValidProfile(request.resource.data) && 
+                    request.resource.data.role in ['worker', 'employer']; // Users can't create admin profiles
       
       // Only owner can update their profile. Admins can update roles or verify.
-      allow update: if (isOwner(uid) && request.resource.data.role == resource.data.role) || isAdmin();
+      allow update: if (isOwner(uid) && 
+                       request.resource.data.role == resource.data.role && 
+                       request.resource.data.isVerified == resource.data.isVerified &&
+                       isValidProfile(request.resource.data)) || isAdmin();
     }
 
     match /jobs/{jobId} {
       allow read: if true;
       allow create: if isEmployer() && request.resource.data.employerId == request.auth.uid && isValidJob(request.resource.data);
-      allow update: if (isOwner(resource.data.employerId) && isValidJob(request.resource.data)) || isAdmin();
+      allow update: if (isOwner(resource.data.employerId) && 
+                       request.resource.data.employerId == resource.data.employerId &&
+                       isValidJob(request.resource.data)) || isAdmin();
       allow delete: if isOwner(resource.data.employerId) || isAdmin();
     }
 
@@ -177,7 +197,9 @@ service cloud.firestore {
         resource.data.receiverId == request.auth.uid || 
         isAdmin()
       );
-      allow create: if isAuthenticated() && request.resource.data.senderId == request.auth.uid;
+      allow create: if isAuthenticated() && 
+                    request.resource.data.senderId == request.auth.uid &&
+                    isValidChatMessage(request.resource.data);
     }
 
     match /notifications/{notificationId} {
@@ -201,6 +223,16 @@ service cloud.firestore {
     }
 
     match /employment_stats/{statId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /system_logs/{logId} {
+      allow read: if isSuperAdmin();
+      allow create: if isAuthenticated(); // System or users can log actions
+    }
+
+    match /system_config/{configId} {
       allow read: if true;
       allow write: if isAdmin();
     }

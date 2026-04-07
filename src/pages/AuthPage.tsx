@@ -112,7 +112,7 @@ export default function AuthPage() {
         else if (profileData.role === 'employer') navigate('/employer/dashboard');
         else if (profileData.role === 'admin') navigate('/admin/dashboard');
         else if (profileData.role === 'super_admin') navigate('/super-admin/dashboard');
-        else navigate('/home');
+        else navigate('/');
       } else {
         setStep(2);
       }
@@ -181,7 +181,7 @@ export default function AuthPage() {
         else if (profileData.role === 'employer') navigate('/employer/dashboard');
         else if (profileData.role === 'admin') navigate('/admin/dashboard');
         else if (profileData.role === 'super_admin') navigate('/super-admin/dashboard');
-        else navigate('/home');
+        else navigate('/');
       } else {
         setStep(2);
       }
@@ -226,7 +226,7 @@ export default function AuthPage() {
       else if (role === 'employer') navigate('/employer/dashboard');
       else if (role === 'admin') navigate('/admin/dashboard');
       else if (role === 'super_admin') navigate('/super-admin/dashboard');
-      else navigate('/home');
+      else navigate('/');
     } catch (error) {
       console.error("Profile creation error:", error);
       setError(t('common.error'));

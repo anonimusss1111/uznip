@@ -38,6 +38,12 @@ export default function JobCard({ job, onApply }: JobCardProps) {
             <span className="text-[10px] font-black text-primary bg-primary/10 px-3 py-1.5 rounded-xl uppercase tracking-widest border border-primary/20">
               {t(`categories.${job.category}`, { defaultValue: job.category })}
             </span>
+            {job.isPromoted && (
+              <span className="flex items-center text-[10px] font-black text-blue-600 bg-blue-500/10 px-3 py-1.5 rounded-xl uppercase tracking-widest border border-blue-500/20 shadow-lg shadow-blue-600/10">
+                <Star size={12} className="mr-1.5 fill-blue-600" />
+                {t('common.promoted', { defaultValue: 'PROMOTED' })}
+              </span>
+            )}
             {job.status === 'open' && (
               <span className="flex items-center text-[10px] font-black text-emerald-600 bg-emerald-500/10 px-3 py-1.5 rounded-xl uppercase tracking-widest border border-emerald-500/20">
                 <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-2 animate-pulse" />

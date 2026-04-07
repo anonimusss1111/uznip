@@ -14,6 +14,8 @@ import AdminDashboard from './pages/admin/Dashboard';
 import AdminContracts from './pages/admin/Contracts';
 import AdminDisputes from './pages/admin/Disputes';
 import SuperAdminDashboard from './pages/super-admin/Dashboard';
+import SystemLogs from './pages/admin/SystemLogs';
+import SystemSettings from './pages/admin/SystemSettings';
 import UsersManagement from './pages/admin/UsersManagement';
 import JobsManagement from './pages/admin/JobsManagement';
 import VerificationManagement from './pages/admin/VerificationManagement';
@@ -43,9 +45,9 @@ export default function App() {
           <ErrorBoundary>
             <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
               <Routes>
-                <Route path="/" element={<AuthPage />} />
-                <Route path="/home" element={<LandingPage />} />
-                <Route path="/auth" element={<Navigate to="/" replace />} />
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/auth" element={<AuthPage />} />
+                <Route path="/home" element={<Navigate to="/" replace />} />
                 <Route path="/jobs" element={<JobsPage />} />
         <Route path="/workers" element={<WorkersPage />} />
         <Route path="/worker/:userId" element={<ProfilePage />} />
@@ -84,6 +86,8 @@ export default function App() {
 
         {/* Super Admin Routes */}
         <Route path="/super-admin/dashboard" element={<RoleProtectedRoute allowedRoles={['super_admin']}><SuperAdminDashboard /></RoleProtectedRoute>} />
+        <Route path="/admin/logs" element={<RoleProtectedRoute allowedRoles={['super_admin']}><SystemLogs /></RoleProtectedRoute>} />
+        <Route path="/admin/settings" element={<RoleProtectedRoute allowedRoles={['super_admin', 'admin']}><SystemSettings /></RoleProtectedRoute>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" />} />

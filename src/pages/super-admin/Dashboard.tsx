@@ -43,7 +43,7 @@ import {
 } from 'recharts';
 
 export default function SuperAdminDashboard() {
-  const { profile } = useAuth();
+  const { profile, isDemo } = useAuth();
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalWorkers: 0,
@@ -59,6 +59,21 @@ export default function SuperAdminDashboard() {
   useEffect(() => {
     async function fetchSuperAdminData() {
       if (profile?.role !== 'super_admin') return;
+
+      if (isDemo) {
+        setStats({
+          totalUsers: 1240,
+          totalWorkers: 820,
+          totalEmployers: 420,
+          totalJobs: 560,
+          totalServicePosts: 340,
+          totalContracts: 280,
+          totalDisputes: 12,
+          pendingVerifications: 45
+        });
+        setLoading(false);
+        return;
+      }
 
       try {
         const usersSnap = await getDocs(collection(db, 'profiles'));

@@ -132,7 +132,7 @@ export default function CreateServicePost() {
                   value={formData.expectedPrice}
                   onChange={(e) => setFormData({ ...formData, expectedPrice: e.target.value })}
                   className="w-full px-4 py-3.5 rounded-2xl border border-border bg-background text-foreground focus:ring-2 focus:ring-primary outline-none transition-all"
-                  placeholder="Masalan: 200000"
+                  placeholder={t('employer.dashboard.price_placeholder', { defaultValue: 'Masalan: 200000' })}
                 />
               </div>
 

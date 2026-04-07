@@ -3,24 +3,24 @@ import DashboardLayout from '../../components/DashboardLayout';
 import { useAuth } from '../../hooks/useAuth';
 import { db } from '../../firebase';
 import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore';
-import { Job, Profile, Contract, Dispute, VerificationRequest } from '../../types';
+import { Job, Profile, Contract, VerificationRequest } from '../../types';
 import { 
   Users, 
   Briefcase, 
   CheckCircle, 
   AlertTriangle, 
   ShieldCheck, 
-  TrendingUp, 
-  BarChart3, 
-  Clock, 
   ChevronRight,
   UserCheck,
-  FileText
+  FileText,
+  Clock
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { uz } from 'date-fns/locale';
+import { uz, ru, enUS } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
+import { useTranslation } from 'react-i18next';
+import { performanceUtils } from '../../lib/performance';
 import { 
   BarChart, 
   Bar, 
@@ -29,15 +29,14 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer, 
-  LineChart, 
-  Line,
   PieChart,
   Pie,
   Cell
 } from 'recharts';
 
 export default function AdminDashboard() {
-  const { profile } = useAuth();
+  const { profile, isDemo } = useAuth();
+  const { t, i18n } = useTranslation();
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalJobs: 0,
@@ -52,22 +51,50 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     async function fetchAdminData() {
-      if (profile?.role !== 'admin') return;
+      if (profile?.role !== 'admin' && profile?.role !== 'super_admin') return;
+
+      if (isDemo) {
+        setStats({
+          totalUsers: 850,
+          totalJobs: 420,
+          totalContracts: 180,
+          pendingVerifications: 24,
+          activeDisputes: 5
+        });
+        setRecentUsers([
+          { uid: '1', fullName: 'Ali Valiyev', role: 'worker', region: 'Samarqand', createdAt: new Date().toISOString() } as any,
+          { uid: '2', fullName: 'Olim Ganiyev', role: 'employer', region: 'Samarqand', createdAt: new Date().toISOString() } as any,
+        ]);
+        setRecentJobs([
+          { id: '1', title: 'Bogʻbon kerak', price: 150000, status: 'open', createdAt: new Date().toISOString() } as any,
+          { id: '2', title: 'Usta kerak', price: 200000, status: 'open', createdAt: new Date().toISOString() } as any,
+        ]);
+        setLoading(false);
+        return;
+      }
 
       try {
-        // Fetch stats
-        const usersSnap = await getDocs(collection(db, 'profiles'));
-        const jobsSnap = await getDocs(collection(db, 'jobs'));
-        const contractsSnap = await getDocs(collection(db, 'contracts'));
-        const verificationsSnap = await getDocs(query(collection(db, 'verification_requests'), where('status', '==', 'pending')));
-        const disputesSnap = await getDocs(query(collection(db, 'disputes'), where('status', '==', 'pending')));
+        // Fetch stats efficiently using getCountFromServer via performanceUtils
+        const [
+          usersCount, 
+          jobsCount, 
+          contractsCount, 
+          verificationsCount, 
+          disputesCount
+        ] = await Promise.all([
+          performanceUtils.getCollectionCount(collection(db, 'profiles')),
+          performanceUtils.getCollectionCount(collection(db, 'jobs')),
+          performanceUtils.getCollectionCount(collection(db, 'contracts')),
+          performanceUtils.getCollectionCount(query(collection(db, 'verification_requests'), where('status', '==', 'pending'))),
+          performanceUtils.getCollectionCount(query(collection(db, 'disputes'), where('status', '==', 'pending')))
+        ]);
 
         setStats({
-          totalUsers: usersSnap.docs.length,
-          totalJobs: jobsSnap.docs.length,
-          totalContracts: contractsSnap.docs.length,
-          pendingVerifications: verificationsSnap.docs.length,
-          activeDisputes: disputesSnap.docs.length
+          totalUsers: usersCount,
+          totalJobs: jobsCount,
+          totalContracts: contractsCount,
+          pendingVerifications: verificationsCount,
+          activeDisputes: disputesCount
         });
 
         // Fetch recent users
@@ -81,6 +108,7 @@ export default function AdminDashboard() {
         setRecentJobs(recentJobsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Job)));
 
         // Fetch pending verifications
+        const verificationsSnap = await getDocs(query(collection(db, 'verification_requests'), where('status', '==', 'pending'), limit(5)));
         setPendingVerifications(verificationsSnap.docs.map(d => ({ id: d.id, ...d.data() } as VerificationRequest)));
 
       } catch (error) {
@@ -93,12 +121,20 @@ export default function AdminDashboard() {
     fetchAdminData();
   }, [profile]);
 
+  const getDateLocale = () => {
+    switch (i18n.language) {
+      case 'ru': return ru;
+      case 'en': return enUS;
+      default: return uz;
+    }
+  };
+
   const statCards = [
-    { label: 'Jami foydalanuvchilar', value: stats.totalUsers, icon: Users, color: 'bg-blue-600', shadow: 'shadow-blue-600/20' },
-    { label: 'Jami eʼlonlar', value: stats.totalJobs, icon: Briefcase, color: 'bg-indigo-600', shadow: 'shadow-indigo-600/20' },
-    { label: 'Jami shartnomalar', value: stats.totalContracts, icon: CheckCircle, color: 'bg-emerald-600', shadow: 'shadow-emerald-600/20' },
-    { label: 'Kutilayotgan tasdiqlar', value: stats.pendingVerifications, icon: ShieldCheck, color: 'bg-amber-600', shadow: 'shadow-amber-600/20' },
-    { label: 'Faol nizolar', value: stats.activeDisputes, icon: AlertTriangle, color: 'bg-rose-600', shadow: 'shadow-rose-600/20' },
+    { label: t('admin.dashboard.total_users'), value: stats.totalUsers, icon: Users, color: 'bg-blue-600', shadow: 'shadow-blue-600/20' },
+    { label: t('admin.dashboard.total_jobs'), value: stats.totalJobs, icon: Briefcase, color: 'bg-indigo-600', shadow: 'shadow-indigo-600/20' },
+    { label: t('admin.dashboard.total_contracts'), value: stats.totalContracts, icon: CheckCircle, color: 'bg-emerald-600', shadow: 'shadow-emerald-600/20' },
+    { label: t('admin.dashboard.pending_verifications'), value: stats.pendingVerifications, icon: ShieldCheck, color: 'bg-amber-600', shadow: 'shadow-amber-600/20' },
+    { label: t('admin.dashboard.active_disputes'), value: stats.activeDisputes, icon: AlertTriangle, color: 'bg-rose-600', shadow: 'shadow-rose-600/20' },
   ];
 
   const chartData = [
@@ -116,18 +152,18 @@ export default function AdminDashboard() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <h2 className="text-4xl font-black text-slate-900 tracking-tight">Boshqaruv paneli</h2>
-            <p className="text-slate-500 mt-2 font-medium">QULAY ISH platformasining umumiy holati va boshqaruvi.</p>
+            <h2 className="text-4xl font-black text-slate-900 tracking-tight">{t('admin.dashboard.title')}</h2>
+            <p className="text-slate-500 mt-2 font-medium">{t('admin.dashboard.subtitle')}</p>
           </div>
           <div className="flex gap-4">
             <button className="px-8 py-4 bg-white text-slate-900 rounded-[24px] font-black uppercase tracking-widest border border-slate-100 shadow-sm hover:bg-slate-50 transition-all">
-              Hisobotlar
+              {t('admin.dashboard.reports')}
             </button>
             <Link
               to="/admin/verification"
               className="px-8 py-4 bg-blue-600 text-white rounded-[24px] font-black uppercase tracking-widest shadow-2xl shadow-blue-600/30 hover:scale-105 transition-all duration-300"
             >
-              Tasdiqlash
+              {t('admin.dashboard.verify')}
             </Link>
           </div>
         </div>
@@ -160,7 +196,7 @@ export default function AdminDashboard() {
           <div className="bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm">
             <h3 className="text-2xl font-black text-slate-900 mb-8 flex items-center gap-3">
               <div className="w-2 h-8 bg-blue-600 rounded-full" />
-              Platforma oʻsishi
+              {t('admin.dashboard.growth')}
             </h3>
             <div className="h-80 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -181,16 +217,16 @@ export default function AdminDashboard() {
           <div className="bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm">
             <h3 className="text-2xl font-black text-slate-900 mb-8 flex items-center gap-3">
               <div className="w-2 h-8 bg-emerald-500 rounded-full" />
-              Foydalanuvchilar taqsimoti
+              {t('admin.dashboard.user_distribution')}
             </h3>
             <div className="h-80 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={[
-                      { name: 'Ishchilar', value: 65 },
-                      { name: 'Ish beruvchilar', value: 30 },
-                      { name: 'Adminlar', value: 5 },
+                      { name: t('admin.dashboard.workers'), value: 65 },
+                      { name: t('admin.dashboard.employers'), value: 30 },
+                      { name: t('admin.dashboard.admins'), value: 5 },
                     ]}
                     cx="50%"
                     cy="50%"
@@ -216,7 +252,7 @@ export default function AdminDashboard() {
           <div className="space-y-6">
             <h3 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3 px-2">
               <div className="w-2 h-8 bg-blue-600 rounded-full" />
-              Yangi foydalanuvchilar
+              {t('admin.dashboard.recent_users')}
             </h3>
             <div className="bg-white rounded-[40px] border border-slate-100 overflow-hidden shadow-sm">
               <div className="divide-y divide-slate-50">
@@ -234,7 +270,7 @@ export default function AdminDashboard() {
                 ))}
               </div>
               <Link to="/admin/users" className="p-6 bg-slate-50/50 border-t border-slate-50 block text-center text-xs font-black text-blue-600 uppercase tracking-widest hover:text-blue-700">
-                Barcha foydalanuvchilar
+                {t('admin.dashboard.view_all_users')}
               </Link>
             </div>
           </div>
@@ -243,7 +279,7 @@ export default function AdminDashboard() {
           <div className="space-y-6">
             <h3 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3 px-2">
               <div className="w-2 h-8 bg-indigo-600 rounded-full" />
-              Yangi eʼlonlar
+              {t('admin.dashboard.recent_jobs')}
             </h3>
             <div className="bg-white rounded-[40px] border border-slate-100 overflow-hidden shadow-sm">
               <div className="divide-y divide-slate-50">
@@ -261,7 +297,7 @@ export default function AdminDashboard() {
                 ))}
               </div>
               <Link to="/admin/jobs" className="p-6 bg-slate-50/50 border-t border-slate-50 block text-center text-xs font-black text-indigo-600 uppercase tracking-widest hover:text-indigo-700">
-                Barcha eʼlonlar
+                {t('admin.dashboard.view_all_jobs')}
               </Link>
             </div>
           </div>
@@ -270,7 +306,7 @@ export default function AdminDashboard() {
           <div className="space-y-6">
             <h3 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3 px-2">
               <div className="w-2 h-8 bg-amber-500 rounded-full" />
-              Kutilayotgan tasdiqlar
+              {t('admin.dashboard.pending_verifications')}
             </h3>
             <div className="bg-white rounded-[40px] border border-slate-100 overflow-hidden shadow-sm">
               {pendingVerifications.length > 0 ? (
@@ -282,7 +318,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-black text-slate-900 truncate group-hover:text-amber-600 transition-colors">ID: {v.userId.slice(-6)}</p>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{format(v.createdAt?.toDate?.() || new Date(), 'd MMM')}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{format(v.createdAt?.toDate?.() || new Date(), 'd MMM', { locale: getDateLocale() })}</p>
                       </div>
                       <Link to={`/admin/verification/${v.id}`} className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20">
                         <CheckCircle className="w-5 h-5" />
@@ -292,11 +328,11 @@ export default function AdminDashboard() {
                 </div>
               ) : (
                 <div className="p-16 text-center">
-                  <p className="text-sm text-slate-400 font-bold">Kutilayotgan soʻrovlar yoʻq.</p>
+                  <p className="text-sm text-slate-400 font-bold">{t('admin.dashboard.no_pending_requests')}</p>
                 </div>
               )}
               <Link to="/admin/verification" className="p-6 bg-slate-50/50 border-t border-slate-50 block text-center text-xs font-black text-amber-600 uppercase tracking-widest hover:text-amber-700">
-                Barcha soʻrovlar
+                {t('admin.dashboard.view_all_requests')}
               </Link>
             </div>
           </div>

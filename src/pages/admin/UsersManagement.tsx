@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
+import { useAuth } from '../../hooks/useAuth';
 import { db, handleFirestoreError, OperationType } from '../../firebase';
-import { collection, query, getDocs, doc, updateDoc, orderBy, where } from 'firebase/firestore';
+import { collection, query, where, getDocs, updateDoc, doc, orderBy, limit, startAfter, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { Profile } from '../../types';
 import { 
   Users, 
   Search, 
-  Filter, 
   MoreVertical, 
   ShieldCheck, 
   ShieldAlert, 
@@ -16,28 +16,70 @@ import {
   Phone,
   MapPin,
   Calendar,
-  Clock
+  Clock,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { uz } from 'date-fns/locale';
+import { uz, ru, enUS } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
+import { performanceUtils } from '../../lib/performance';
 
 export default function UsersManagement() {
+  const { t, i18n } = useTranslation();
+  const { isDemo } = useAuth();
   const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [verificationFilter, setVerificationFilter] = useState<string>('all');
+  
+  // Pagination
+  const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    fetchUsers(true);
+  }, [roleFilter, verificationFilter]);
 
-  async function fetchUsers() {
+  async function fetchUsers(reset = false) {
     setLoading(true);
+    if (isDemo) {
+      setUsers([
+        { uid: '1', fullName: 'Ali Valiyev', role: 'worker', region: 'Samarqand viloyati', isVerified: true, createdAt: { toDate: () => new Date() } as any } as any,
+        { uid: '2', fullName: 'Olim Ganiyev', role: 'employer', region: 'Samarqand viloyati', isVerified: false, createdAt: { toDate: () => new Date() } as any } as any,
+      ]);
+      setLoading(false);
+      return;
+    }
     try {
-      const usersSnap = await getDocs(query(collection(db, 'profiles'), orderBy('createdAt', 'desc')));
-      setUsers(usersSnap.docs.map(d => ({ uid: d.id, ...d.data() } as Profile)));
+      const constraints = [];
+      if (roleFilter !== 'all') constraints.push(where('role', '==', roleFilter));
+      if (verificationFilter === 'verified') constraints.push(where('isVerified', '==', true));
+      if (verificationFilter === 'unverified') constraints.push(where('isVerified', '==', false));
+      
+      constraints.push(orderBy('createdAt', 'desc'));
+
+      const q = performanceUtils.createPaginatedQuery(
+        'profiles', 
+        constraints, 
+        pageSize, 
+        reset ? undefined : (lastVisible || undefined)
+      );
+
+      const snap = await getDocs(q);
+      const fetchedUsers = snap.docs.map(d => ({ uid: d.id, ...d.data() } as Profile));
+      
+      if (reset) {
+        setUsers(fetchedUsers);
+        setPage(1);
+      } else {
+        setUsers(prev => [...prev, ...fetchedUsers]);
+      }
+      
+      setLastVisible(snap.docs[snap.docs.length - 1] || null);
     } catch (error) {
       handleFirestoreError(error, OperationType.LIST, 'profiles');
     } finally {
@@ -57,18 +99,21 @@ export default function UsersManagement() {
     }
   };
 
+  const getDateLocale = () => {
+    switch (i18n.language) {
+      case 'ru': return ru;
+      case 'en': return enUS;
+      default: return uz;
+    }
+  };
+
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
       user.fullName.toLowerCase().includes(search.toLowerCase()) ||
       user.phoneNumber?.includes(search) ||
       user.email?.toLowerCase().includes(search.toLowerCase());
     
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-    const matchesVerification = verificationFilter === 'all' || 
-      (verificationFilter === 'verified' && user.isVerified) ||
-      (verificationFilter === 'unverified' && !user.isVerified);
-
-    return matchesSearch && matchesRole && matchesVerification;
+    return matchesSearch;
   });
 
   return (
@@ -76,28 +121,19 @@ export default function UsersManagement() {
       <div className="space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-foreground tracking-tight">Foydalanuvchilarni boshqarish</h2>
-            <p className="text-muted-foreground mt-2">Platformadagi barcha ishchi va ish beruvchilarni nazorat qilish.</p>
+            <h2 className="text-3xl font-bold text-foreground tracking-tight">{t('admin.users.title')}</h2>
+            <p className="text-muted-foreground mt-2">{t('admin.users.subtitle')}</p>
           </div>
           <div className="flex items-center gap-2 bg-card p-1 rounded-2xl border border-border shadow-sm">
-            <button 
-              onClick={() => setRoleFilter('all')}
-              className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${roleFilter === 'all' ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              Barchasi
-            </button>
-            <button 
-              onClick={() => setRoleFilter('worker')}
-              className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${roleFilter === 'worker' ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              Ishchilar
-            </button>
-            <button 
-              onClick={() => setRoleFilter('employer')}
-              className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${roleFilter === 'employer' ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              Ish beruvchilar
-            </button>
+            {(['all', 'worker', 'employer'] as const).map((role) => (
+              <button 
+                key={role}
+                onClick={() => setRoleFilter(role)}
+                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${roleFilter === role ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                {t(`admin.users.${role}`)}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -107,7 +143,7 @@ export default function UsersManagement() {
             <Search className="absolute left-4 top-3.5 text-muted-foreground" size={20} />
             <input
               type="text"
-              placeholder="Ism, telefon yoki email orqali qidirish..."
+              placeholder={t('admin.users.search_placeholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-border bg-card focus:ring-2 focus:ring-primary outline-none transition-all"
@@ -118,9 +154,9 @@ export default function UsersManagement() {
             onChange={(e) => setVerificationFilter(e.target.value)}
             className="px-4 py-3.5 rounded-2xl border border-border bg-card focus:ring-2 focus:ring-primary outline-none font-medium"
           >
-            <option value="all">Barcha holatlar</option>
-            <option value="verified">Tasdiqlanganlar</option>
-            <option value="unverified">Tasdiqlanmaganlar</option>
+            <option value="all">{t('admin.users.all_statuses')}</option>
+            <option value="verified">{t('admin.users.verified')}</option>
+            <option value="unverified">{t('admin.users.unverified')}</option>
           </select>
         </div>
 
@@ -130,17 +166,17 @@ export default function UsersManagement() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-muted/50 border-b border-border">
-                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Foydalanuvchi</th>
-                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Rol / Hudud</th>
-                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Kontakt</th>
-                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Holati</th>
-                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Sana</th>
-                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-right">Amallar</th>
+                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">{t('admin.users.table.user')}</th>
+                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">{t('admin.users.table.role_region')}</th>
+                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">{t('admin.users.table.contact')}</th>
+                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">{t('admin.users.table.status')}</th>
+                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">{t('admin.users.table.date')}</th>
+                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-right">{t('admin.users.table.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 <AnimatePresence mode="popLayout">
-                  {loading ? (
+                  {loading && users.length === 0 ? (
                     [1, 2, 3, 4, 5].map(i => (
                       <tr key={i} className="animate-pulse">
                         <td colSpan={6} className="px-6 py-8">
@@ -159,11 +195,9 @@ export default function UsersManagement() {
                       >
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <img 
-                              src={user.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName)}`} 
-                              alt="" 
-                              className="w-10 h-10 rounded-full object-cover border border-border"
-                            />
+                            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-black text-sm border border-blue-100">
+                              {user.fullName[0]}
+                            </div>
                             <div>
                               <div className="font-bold text-foreground flex items-center gap-1">
                                 {user.fullName}
@@ -180,11 +214,11 @@ export default function UsersManagement() {
                               user.role === 'employer' ? 'bg-green-100 text-green-600' :
                               'bg-blue-100 text-blue-600'
                             }`}>
-                              {user.role}
+                              {t(`auth.${user.role}`)}
                             </span>
                             <div className="flex items-center text-xs text-muted-foreground">
                               <MapPin size={12} className="mr-1" />
-                              {user.region}, {user.district}
+                              {user.region}
                             </div>
                           </div>
                         </td>
@@ -203,18 +237,18 @@ export default function UsersManagement() {
                         <td className="px-6 py-4">
                           {user.isVerified ? (
                             <span className="flex items-center gap-1 text-xs font-bold text-green-600">
-                              <CheckCircle size={14} /> Tasdiqlangan
+                              <CheckCircle size={14} /> {t('admin.users.verified_status')}
                             </span>
                           ) : (
                             <span className="flex items-center gap-1 text-xs font-bold text-amber-500">
-                              <Clock size={14} /> Kutilmoqda
+                              <Clock size={14} /> {t('admin.users.pending_status')}
                             </span>
                           )}
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center text-xs text-muted-foreground">
                             <Calendar size={12} className="mr-1" />
-                            {user.createdAt ? format(user.createdAt.toDate(), 'dd MMM, yyyy', { locale: uz }) : '-'}
+                            {user.createdAt ? format(user.createdAt.toDate(), 'dd MMM, yyyy', { locale: getDateLocale() }) : '-'}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right">
@@ -222,11 +256,11 @@ export default function UsersManagement() {
                             <button 
                               onClick={() => toggleVerification(user.uid, user.isVerified)}
                               className={`p-2 rounded-xl transition-all ${user.isVerified ? 'text-amber-500 hover:bg-amber-50' : 'text-blue-500 hover:bg-blue-50'}`}
-                              title={user.isVerified ? "Tasdiqni bekor qilish" : "Tasdiqlash"}
+                              title={user.isVerified ? t('admin.users.unverify') : t('admin.users.verify')}
                             >
                               {user.isVerified ? <ShieldAlert size={20} /> : <ShieldCheck size={20} />}
                             </button>
-                            <button className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all" title="Bloklash">
+                            <button className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all" title={t('admin.users.block')}>
                               <UserX size={20} />
                             </button>
                           </div>
@@ -239,8 +273,8 @@ export default function UsersManagement() {
                         <div className="bg-muted w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-muted-foreground">
                           <Users size={32} />
                         </div>
-                        <h3 className="text-lg font-bold text-foreground">Foydalanuvchilar topilmadi</h3>
-                        <p className="text-muted-foreground">Qidiruv parametrlarini oʻzgartirib koʻring.</p>
+                        <h3 className="text-lg font-bold text-foreground">{t('admin.users.not_found')}</h3>
+                        <p className="text-muted-foreground">{t('admin.users.not_found_desc')}</p>
                       </td>
                     </tr>
                   )}
@@ -248,6 +282,19 @@ export default function UsersManagement() {
               </tbody>
             </table>
           </div>
+          
+          {/* Load More */}
+          {lastVisible && (
+            <div className="p-6 border-t border-border flex justify-center">
+              <button
+                onClick={() => fetchUsers()}
+                disabled={loading}
+                className="px-6 py-2 bg-slate-100 text-slate-900 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all disabled:opacity-50"
+              >
+                {loading ? t('common.loading') : 'Load More'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </DashboardLayout>

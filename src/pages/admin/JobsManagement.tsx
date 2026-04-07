@@ -1,45 +1,83 @@
 import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
-import { db } from '../../firebase';
-import { collection, query, getDocs, doc, updateDoc, deleteDoc, orderBy, where } from 'firebase/firestore';
-import { Job, Profile } from '../../types';
+import { useAuth } from '../../hooks/useAuth';
+import { db, handleFirestoreError, OperationType } from '../../firebase';
+import { collection, query, where, getDocs, updateDoc, doc, deleteDoc, orderBy, limit, startAfter, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
+import { Job } from '../../types';
 import { 
   Briefcase, 
   Search, 
-  Filter, 
   MoreVertical, 
   CheckCircle, 
   XCircle, 
   Trash2, 
-  Eye,
   MapPin,
   Calendar,
   DollarSign,
   Clock,
-  AlertCircle
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { uz } from 'date-fns/locale';
+import { uz, ru, enUS } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
+import { performanceUtils } from '../../lib/performance';
 
 export default function JobsManagement() {
+  const { t, i18n } = useTranslation();
+  const { isDemo } = useAuth();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [regionFilter, setRegionFilter] = useState<string>('all');
+  
+  // Pagination
+  const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   useEffect(() => {
-    fetchJobs();
-  }, []);
+    fetchJobs(true);
+  }, [statusFilter]);
 
-  async function fetchJobs() {
+  async function fetchJobs(reset = false) {
     setLoading(true);
+    if (isDemo) {
+      setJobs([
+        { id: '1', title: 'Demo Job 1', category: 'construction', price: 500000, status: 'open', region: 'Samarqand viloyati', employerId: 'employer1', createdAt: { toDate: () => new Date() } as any } as any,
+        { id: '2', title: 'Demo Job 2', category: 'cleaning', price: 200000, status: 'open', region: 'Samarqand viloyati', employerId: 'employer2', createdAt: { toDate: () => new Date() } as any } as any,
+      ]);
+      setLoading(false);
+      return;
+    }
     try {
-      const jobsSnap = await getDocs(query(collection(db, 'jobs'), orderBy('createdAt', 'desc')));
-      setJobs(jobsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Job)));
+      const constraints = [];
+      if (statusFilter !== 'all') constraints.push(where('status', '==', statusFilter));
+      
+      constraints.push(orderBy('createdAt', 'desc'));
+
+      const q = performanceUtils.createPaginatedQuery(
+        'jobs', 
+        constraints, 
+        pageSize, 
+        reset ? undefined : (lastVisible || undefined)
+      );
+
+      const snap = await getDocs(q);
+      const fetchedJobs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Job));
+      
+      if (reset) {
+        setJobs(fetchedJobs);
+        setPage(1);
+      } else {
+        setJobs(prev => [...prev, ...fetchedJobs]);
+      }
+      
+      setLastVisible(snap.docs[snap.docs.length - 1] || null);
     } catch (error) {
-      console.error('Error fetching jobs:', error);
+      handleFirestoreError(error, OperationType.LIST, 'jobs');
     } finally {
       setLoading(false);
     }
@@ -52,30 +90,32 @@ export default function JobsManagement() {
       });
       setJobs(jobs.map(j => j.id === jobId ? { ...j, status: newStatus as any } : j));
     } catch (error) {
-      console.error('Error updating job status:', error);
+      handleFirestoreError(error, OperationType.UPDATE, `jobs/${jobId}`);
     }
   };
 
   const deleteJob = async (jobId: string) => {
-    if (!window.confirm('Haqiqatan ham ushbu ishni oʻchirib tashlamoqchimisiz?')) return;
+    if (!window.confirm(t('admin.jobs.delete_confirm'))) return;
     try {
       await deleteDoc(doc(db, 'jobs', jobId));
       setJobs(jobs.filter(j => j.id !== jobId));
     } catch (error) {
-      console.error('Error deleting job:', error);
+      handleFirestoreError(error, OperationType.DELETE, `jobs/${jobId}`);
     }
   };
 
-  const filteredJobs = jobs.filter(job => {
-    const matchesSearch = 
-      job.title.toLowerCase().includes(search.toLowerCase()) ||
-      job.employerId.includes(search);
-    
-    const matchesStatus = statusFilter === 'all' || job.status === statusFilter;
-    const matchesRegion = regionFilter === 'all' || job.region === regionFilter;
+  const getDateLocale = () => {
+    switch (i18n.language) {
+      case 'ru': return ru;
+      case 'en': return enUS;
+      default: return uz;
+    }
+  };
 
-    return matchesSearch && matchesStatus && matchesRegion;
-  });
+  const filteredJobs = jobs.filter(job => 
+    job.title.toLowerCase().includes(search.toLowerCase()) ||
+    job.employerId.includes(search)
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -93,28 +133,19 @@ export default function JobsManagement() {
       <div className="space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-foreground tracking-tight">Ishlarni boshqarish</h2>
-            <p className="text-muted-foreground mt-2">Platformadagi barcha eʻlonlarni nazorat qilish.</p>
+            <h2 className="text-3xl font-bold text-foreground tracking-tight">{t('admin.jobs.title')}</h2>
+            <p className="text-muted-foreground mt-2">{t('admin.jobs.subtitle')}</p>
           </div>
           <div className="flex items-center gap-2 bg-card p-1 rounded-2xl border border-border shadow-sm">
-            <button 
-              onClick={() => setStatusFilter('all')}
-              className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${statusFilter === 'all' ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              Barchasi
-            </button>
-            <button 
-              onClick={() => setStatusFilter('open')}
-              className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${statusFilter === 'open' ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              Ochiq
-            </button>
-            <button 
-              onClick={() => setStatusFilter('in-progress')}
-              className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${statusFilter === 'in-progress' ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              Jarayonda
-            </button>
+            {(['all', 'open', 'in_progress', 'closed'] as const).map((status) => (
+              <button 
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${statusFilter === status ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                {t(`admin.jobs.${status}`)}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -124,7 +155,7 @@ export default function JobsManagement() {
             <Search className="absolute left-4 top-3.5 text-muted-foreground" size={20} />
             <input
               type="text"
-              placeholder="Ish nomi yoki ish beruvchi ID orqali qidirish..."
+              placeholder={t('admin.jobs.search_placeholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-border bg-card focus:ring-2 focus:ring-primary outline-none transition-all"
@@ -135,12 +166,12 @@ export default function JobsManagement() {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-4 py-3.5 rounded-2xl border border-border bg-card focus:ring-2 focus:ring-primary outline-none font-medium"
           >
-            <option value="all">Barcha holatlar</option>
-            <option value="open">Ochiq</option>
-            <option value="filled">Toʻldirilgan</option>
-            <option value="in-progress">Jarayonda</option>
-            <option value="completed">Yakunlangan</option>
-            <option value="closed">Yopilgan</option>
+            <option value="all">{t('admin.jobs.all_statuses')}</option>
+            <option value="open">{t('admin.jobs.open')}</option>
+            <option value="filled">{t('admin.jobs.filled')}</option>
+            <option value="in_progress">{t('admin.jobs.in_progress')}</option>
+            <option value="completed">{t('admin.jobs.completed')}</option>
+            <option value="closed">{t('admin.jobs.closed')}</option>
           </select>
         </div>
 
@@ -150,17 +181,17 @@ export default function JobsManagement() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-muted/50 border-b border-border">
-                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Ish nomi</th>
-                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Toifa / Hudud</th>
-                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Narxi</th>
-                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Holati</th>
-                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Sana</th>
-                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-right">Amallar</th>
+                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">{t('admin.jobs.table.title')}</th>
+                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">{t('admin.jobs.table.cat_region')}</th>
+                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">{t('admin.jobs.table.price')}</th>
+                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">{t('admin.jobs.table.status')}</th>
+                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">{t('admin.jobs.table.date')}</th>
+                  <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-right">{t('admin.jobs.table.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 <AnimatePresence mode="popLayout">
-                  {loading ? (
+                  {loading && jobs.length === 0 ? (
                     [1, 2, 3, 4, 5].map(i => (
                       <tr key={i} className="animate-pulse">
                         <td colSpan={6} className="px-6 py-8">
@@ -190,10 +221,10 @@ export default function JobsManagement() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="space-y-1">
-                            <div className="text-xs font-bold text-foreground">{job.category}</div>
+                            <div className="text-xs font-bold text-foreground">{t(`categories.${job.category}`)}</div>
                             <div className="flex items-center text-xs text-muted-foreground">
                               <MapPin size={12} className="mr-1" />
-                              {job.region}, {job.district}
+                              {job.region}
                             </div>
                           </div>
                         </td>
@@ -205,13 +236,13 @@ export default function JobsManagement() {
                         </td>
                         <td className="px-6 py-4">
                           <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${getStatusColor(job.status)}`}>
-                            {job.status}
+                            {t(`admin.jobs.${job.status}`)}
                           </span>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center text-xs text-muted-foreground">
                             <Calendar size={12} className="mr-1" />
-                            {job.createdAt ? format(job.createdAt.toDate(), 'dd MMM, yyyy', { locale: uz }) : '-'}
+                            {job.createdAt ? format(job.createdAt.toDate(), 'dd MMM, yyyy', { locale: getDateLocale() }) : '-'}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right">
@@ -219,14 +250,14 @@ export default function JobsManagement() {
                             <button 
                               onClick={() => updateJobStatus(job.id, job.status === 'closed' ? 'open' : 'closed')}
                               className={`p-2 rounded-xl transition-all ${job.status === 'closed' ? 'text-green-500 hover:bg-green-50' : 'text-amber-500 hover:bg-amber-50'}`}
-                              title={job.status === 'closed' ? "Ochish" : "Yopish"}
+                              title={job.status === 'closed' ? t('admin.jobs.open_job') : t('admin.jobs.close_job')}
                             >
                               {job.status === 'closed' ? <CheckCircle size={20} /> : <XCircle size={20} />}
                             </button>
                             <button 
                               onClick={() => deleteJob(job.id)}
                               className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all" 
-                              title="Oʻchirish"
+                              title={t('admin.jobs.delete')}
                             >
                               <Trash2 size={20} />
                             </button>
@@ -240,8 +271,8 @@ export default function JobsManagement() {
                         <div className="bg-muted w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-muted-foreground">
                           <AlertCircle size={32} />
                         </div>
-                        <h3 className="text-lg font-bold text-foreground">Ishlar topilmadi</h3>
-                        <p className="text-muted-foreground">Qidiruv parametrlarini oʻzgartirib koʻring.</p>
+                        <h3 className="text-lg font-bold text-foreground">{t('admin.jobs.not_found')}</h3>
+                        <p className="text-muted-foreground">{t('admin.jobs.not_found_desc')}</p>
                       </td>
                     </tr>
                   )}
@@ -249,6 +280,19 @@ export default function JobsManagement() {
               </tbody>
             </table>
           </div>
+          
+          {/* Load More */}
+          {lastVisible && (
+            <div className="p-6 border-t border-border flex justify-center">
+              <button
+                onClick={() => fetchJobs()}
+                disabled={loading}
+                className="px-6 py-2 bg-slate-100 text-slate-900 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all disabled:opacity-50"
+              >
+                {loading ? t('common.loading') : 'Load More'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </DashboardLayout>

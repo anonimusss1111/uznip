@@ -15,6 +15,8 @@ export interface Profile {
   completedJobs?: number;
   isVerified?: boolean;
   verificationStatus?: 'none' | 'pending' | 'approved' | 'rejected';
+  isPremium?: boolean;
+  premiumUntil?: any;
   photoUrl?: string;
   createdAt?: any;
   lastActive?: any;
@@ -51,6 +53,8 @@ export interface Job {
   images?: string[];
   requirements?: string;
   contractConditions?: string;
+  isPromoted?: boolean;
+  promotedUntil?: any;
   status: 'open' | 'filled' | 'in-progress' | 'completed' | 'closed';
   createdAt?: any;
 }

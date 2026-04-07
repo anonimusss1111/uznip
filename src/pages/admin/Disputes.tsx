@@ -8,10 +8,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { AlertTriangle, CheckCircle, XCircle, Clock, User, FileText, MessageSquare, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
-import { uz } from 'date-fns/locale';
+import { uz, ru, enUS } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 
 export default function AdminDisputes() {
-  const { profile } = useAuth();
+  const { t, i18n } = useTranslation();
+  const { profile, isDemo } = useAuth();
   const [disputes, setDisputes] = useState<(Dispute & { openedBy?: Profile; contract?: Contract })[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -19,6 +21,24 @@ export default function AdminDisputes() {
     async function fetchDisputes() {
       if (profile?.role !== 'admin' && profile?.role !== 'super_admin') return;
       setLoading(true);
+
+      if (isDemo) {
+        setDisputes([
+          {
+            id: '1',
+            contractId: 'contract1',
+            openedById: 'user1',
+            reason: 'Ish oʻz vaqtida bajarilmadi',
+            status: 'pending',
+            createdAt: { toDate: () => new Date() } as any,
+            openedBy: { fullName: 'Demo User' } as any,
+            contract: { id: 'contract1' } as any
+          }
+        ]);
+        setLoading(false);
+        return;
+      }
+
       try {
         const q = query(collection(db, 'disputes'), orderBy('createdAt', 'desc'));
         const snap = await getDocs(q);
@@ -57,12 +77,20 @@ export default function AdminDisputes() {
     }
   };
 
+  const getDateLocale = () => {
+    switch (i18n.language) {
+      case 'ru': return ru;
+      case 'en': return enUS;
+      default: return uz;
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
         <div>
-          <h2 className="text-3xl font-bold text-foreground tracking-tight">Nizolar boshqaruvi</h2>
-          <p className="text-muted-foreground mt-2">Platformadagi barcha nizolar va shikoyatlar.</p>
+          <h2 className="text-3xl font-bold text-foreground tracking-tight">{t('admin.disputes.title')}</h2>
+          <p className="text-muted-foreground mt-2">{t('admin.disputes.subtitle')}</p>
         </div>
 
         {loading ? (
@@ -91,7 +119,7 @@ export default function AdminDisputes() {
                             <ShieldAlert size={20} />
                           </div>
                           <div>
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Ochgan shaxs</p>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t('admin.disputes.opened_by')}</p>
                             <p className="text-sm font-bold">{dispute.openedBy?.fullName}</p>
                           </div>
                         </div>
@@ -100,7 +128,7 @@ export default function AdminDisputes() {
                             <FileText size={20} />
                           </div>
                           <div>
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Shartnoma ID</p>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t('admin.disputes.contract_id')}</p>
                             <p className="text-sm font-bold">{dispute.contractId.slice(0, 8).toUpperCase()}</p>
                           </div>
                         </div>
@@ -110,7 +138,7 @@ export default function AdminDisputes() {
                       <div className="flex-1 space-y-4">
                         <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
                           <AlertTriangle size={14} className="text-amber-500" />
-                          <span>Status: {dispute.status} • {format(dispute.createdAt?.toDate?.() || new Date(), 'd MMM, HH:mm', { locale: uz })}</span>
+                          <span>{t('common.status')}: {t(`common.${dispute.status}`)} • {format(dispute.createdAt?.toDate?.() || new Date(), 'd MMM, HH:mm', { locale: getDateLocale() })}</span>
                         </div>
                         
                         <div className="bg-secondary/30 p-5 rounded-2xl border border-border/50 text-muted-foreground text-sm leading-relaxed italic">
@@ -127,14 +155,14 @@ export default function AdminDisputes() {
                               className="w-full py-3 bg-green-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-700 transition-all shadow-lg shadow-green-600/20"
                             >
                               <CheckCircle size={18} />
-                              Hal qilish
+                              {t('admin.disputes.resolve')}
                             </button>
                             <button
                               onClick={() => handleResolve(dispute.id, 'rejected')}
                               className="w-full py-3 bg-card text-destructive border border-destructive/20 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-destructive/5 transition-all"
                             >
                               <XCircle size={18} />
-                              Rad etish
+                              {t('common.reject')}
                             </button>
                           </>
                         ) : (
@@ -142,7 +170,7 @@ export default function AdminDisputes() {
                             dispute.status === 'resolved' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'
                           }`}>
                             {dispute.status === 'resolved' ? <CheckCircle size={18} /> : <XCircle size={18} />}
-                            {dispute.status === 'resolved' ? 'Hal qilingan' : 'Rad etilgan'}
+                            {dispute.status === 'resolved' ? t('common.resolved') : t('common.rejected')}
                           </div>
                         )}
                         
@@ -151,7 +179,7 @@ export default function AdminDisputes() {
                           className="w-full py-3 bg-card border border-border rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-secondary transition-all"
                         >
                           <FileText size={18} />
-                          Shartnomani koʻrish
+                          {t('admin.disputes.view_contract')}
                         </Link>
                       </div>
                     </div>
@@ -163,7 +191,7 @@ export default function AdminDisputes() {
         ) : (
           <div className="bg-secondary/20 rounded-[40px] p-20 text-center border-2 border-dashed border-border">
             <AlertTriangle size={40} className="mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-xl font-bold text-foreground">Nizolar topilmadi</h3>
+            <h3 className="text-xl font-bold text-foreground">{t('admin.disputes.no_disputes')}</h3>
           </div>
         )}
       </div>

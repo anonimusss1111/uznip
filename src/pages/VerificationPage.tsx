@@ -6,8 +6,10 @@ import { collection, addDoc, query, where, getDocs, serverTimestamp, updateDoc, 
 import { VerificationRequest } from '../types';
 import { ShieldCheck, Upload, CheckCircle, Clock, AlertTriangle, User, FileText, Camera, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 
 export default function VerificationPage() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const [request, setRequest] = useState<VerificationRequest | null>(null);
   const [loading, setLoading] = useState(true);
@@ -84,8 +86,8 @@ export default function VerificationPage() {
             <ShieldCheck className="w-8 h-8" />
           </div>
           <div>
-            <h2 className="text-3xl font-bold text-foreground tracking-tight">Identity Verification</h2>
-            <p className="text-muted-foreground mt-1">Verify your identity to build trust and unlock all platform features.</p>
+            <h2 className="text-3xl font-bold text-foreground tracking-tight">{t('verification.title')}</h2>
+            <p className="text-muted-foreground mt-1">{t('verification.subtitle')}</p>
           </div>
         </div>
 
@@ -96,17 +98,17 @@ export default function VerificationPage() {
                 <div className="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto">
                   <Clock className="w-10 h-10" />
                 </div>
-                <h3 className="text-2xl font-bold text-foreground">Verification Pending</h3>
+                <h3 className="text-2xl font-bold text-foreground">{t('verification.pending_title')}</h3>
                 <p className="text-muted-foreground max-w-md mx-auto">
-                  Our admin team is currently reviewing your documents. This process usually takes 24-48 hours. We'll notify you once it's complete.
+                  {t('verification.pending_desc')}
                 </p>
                 <div className="pt-6 grid grid-cols-2 gap-4 max-w-sm mx-auto">
                   <div className="p-4 bg-secondary/50 rounded-2xl border border-border">
-                    <p className="text-xs font-bold text-muted-foreground uppercase">ID Submitted</p>
+                    <p className="text-xs font-bold text-muted-foreground uppercase">{t('verification.id_submitted')}</p>
                     <CheckCircle className="w-5 h-5 text-green-500 mx-auto mt-2" />
                   </div>
                   <div className="p-4 bg-secondary/50 rounded-2xl border border-border">
-                    <p className="text-xs font-bold text-muted-foreground uppercase">Selfie Submitted</p>
+                    <p className="text-xs font-bold text-muted-foreground uppercase">{t('verification.selfie_submitted')}</p>
                     <CheckCircle className="w-5 h-5 text-green-500 mx-auto mt-2" />
                   </div>
                 </div>
@@ -116,14 +118,14 @@ export default function VerificationPage() {
                 <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
                   <ShieldCheck className="w-10 h-10" />
                 </div>
-                <h3 className="text-2xl font-bold text-foreground">Verified Account</h3>
+                <h3 className="text-2xl font-bold text-foreground">{t('verification.approved_title')}</h3>
                 <p className="text-muted-foreground max-w-md mx-auto">
-                  Congratulations! Your identity has been verified. You now have a verification badge on your profile.
+                  {t('verification.approved_desc')}
                 </p>
                 <div className="pt-6">
                   <div className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-2xl font-bold">
                     <ShieldCheck className="w-5 h-5" />
-                    Verified User
+                    {t('verification.verified_user')}
                   </div>
                 </div>
               </>
@@ -132,15 +134,15 @@ export default function VerificationPage() {
                 <div className="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto">
                   <AlertTriangle className="w-10 h-10" />
                 </div>
-                <h3 className="text-2xl font-bold text-foreground">Verification Rejected</h3>
+                <h3 className="text-2xl font-bold text-foreground">{t('verification.rejected_title')}</h3>
                 <p className="text-muted-foreground max-w-md mx-auto">
-                  Unfortunately, your verification request was rejected. This could be due to blurry photos or mismatched information.
+                  {t('verification.rejected_desc')}
                 </p>
                 <button
                   onClick={() => setRequest(null)}
                   className="mt-6 px-8 py-3 bg-primary text-primary-foreground rounded-2xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all"
                 >
-                  Try Again
+                  {t('verification.try_again')}
                 </button>
               </>
             )}
@@ -151,22 +153,22 @@ export default function VerificationPage() {
               <section className="space-y-6">
                 <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
                   <FileText className="w-5 h-5 text-primary" />
-                  1. ID Document
+                  {t('verification.id_document')}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Please upload a clear photo of your National ID card or Passport. Ensure all details are legible.
+                  {t('verification.id_desc')}
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="relative group">
                     <div className="aspect-[4/3] bg-secondary/50 rounded-3xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-4 group-hover:border-primary transition-all overflow-hidden">
                       {formData.idPhotoUrl ? (
-                        <img src={formData.idPhotoUrl} alt="ID" className="w-full h-full object-cover" />
+                        <img src={formData.idPhotoUrl} alt="ID" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       ) : (
                         <>
                           <div className="p-4 bg-primary/10 rounded-2xl text-primary">
                             <Upload className="w-8 h-8" />
                           </div>
-                          <p className="text-sm font-bold text-muted-foreground">Upload ID Front</p>
+                          <p className="text-sm font-bold text-muted-foreground">{t('verification.upload_id')}</p>
                         </>
                       )}
                       <input
@@ -179,12 +181,12 @@ export default function VerificationPage() {
                   <div className="p-6 bg-primary/5 rounded-3xl border border-primary/10 space-y-3">
                     <h4 className="font-bold text-primary flex items-center gap-2">
                       <ShieldCheck className="w-4 h-4" />
-                      Requirements
+                      {t('verification.requirements')}
                     </h4>
                     <ul className="text-xs text-muted-foreground space-y-2">
-                      <li className="flex items-center gap-2"><CheckCircle className="w-3 h-3 text-green-500" /> Full name must be visible</li>
-                      <li className="flex items-center gap-2"><CheckCircle className="w-3 h-3 text-green-500" /> Photo must be clear</li>
-                      <li className="flex items-center gap-2"><CheckCircle className="w-3 h-3 text-green-500" /> Document must be valid</li>
+                      <li className="flex items-center gap-2"><CheckCircle className="w-3 h-3 text-green-500" /> {t('verification.req_name')}</li>
+                      <li className="flex items-center gap-2"><CheckCircle className="w-3 h-3 text-green-500" /> {t('verification.req_clear')}</li>
+                      <li className="flex items-center gap-2"><CheckCircle className="w-3 h-3 text-green-500" /> {t('verification.req_valid')}</li>
                     </ul>
                   </div>
                 </div>
@@ -193,22 +195,22 @@ export default function VerificationPage() {
               <section className="space-y-6">
                 <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
                   <Camera className="w-5 h-5 text-primary" />
-                  2. Selfie Verification
+                  {t('verification.selfie_verification')}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Take a selfie holding your ID document next to your face. This helps us confirm you are the owner of the document.
+                  {t('verification.selfie_desc')}
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="relative group">
                     <div className="aspect-square bg-secondary/50 rounded-3xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-4 group-hover:border-primary transition-all overflow-hidden">
                       {formData.selfieUrl ? (
-                        <img src={formData.selfieUrl} alt="Selfie" className="w-full h-full object-cover" />
+                        <img src={formData.selfieUrl} alt="Selfie" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       ) : (
                         <>
                           <div className="p-4 bg-primary/10 rounded-2xl text-primary">
                             <Camera className="w-8 h-8" />
                           </div>
-                          <p className="text-sm font-bold text-muted-foreground">Take/Upload Selfie</p>
+                          <p className="text-sm font-bold text-muted-foreground">{t('verification.take_selfie')}</p>
                         </>
                       )}
                       <input
@@ -221,13 +223,13 @@ export default function VerificationPage() {
                   <div className="space-y-4">
                     <div className="p-6 bg-secondary/30 rounded-3xl border border-border">
                       <p className="text-sm font-medium text-foreground italic">
-                        "Your privacy is our priority. Documents are stored securely and used only for identity verification purposes."
+                        {t('verification.privacy_note')}
                       </p>
                     </div>
                     <div className="p-6 bg-amber-500/10 rounded-3xl border border-amber-500/20 flex gap-3">
                       <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
                       <p className="text-xs text-amber-700">
-                        Ensure good lighting and that your face and ID are both clearly visible in the selfie.
+                        {t('verification.lighting_note')}
                       </p>
                     </div>
                   </div>
@@ -241,7 +243,7 @@ export default function VerificationPage() {
                 disabled={submitting || !formData.idPhotoUrl || !formData.selfieUrl}
                 className="px-12 py-4 bg-primary text-primary-foreground rounded-2xl font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-all disabled:opacity-50"
               >
-                {submitting ? 'Submitting...' : 'Submit for Verification'}
+                {submitting ? t('verification.submitting') : t('verification.submit_btn')}
               </button>
             </div>
           </form>
